@@ -17,10 +17,11 @@ export const questions = [
   { key: "constraints", en: "What must never happen? Think about privacy, mistakes, approvals and things that must keep working.", pl: "Co nie może się wydarzyć? Pomyśl o prywatności, błędach, zatwierdzaniu i rzeczach, które muszą działać bez przerwy." },
   { key: "delivery", en: "Who will use this, on which devices, and what budget or timing should we plan around?", pl: "Kto będzie z tego korzystać, na jakich urządzeniach i jaki budżet oraz termin powinniśmy uwzględnić?" },
 ] as const;
-export type Demo = { id: string; version: number; url: string; summary: string; createdAt: string; checks: string[] };
+export type Demo = { id: string; version: number; url: string; summary: string; createdAt: string; checks: string[]; bundled?: boolean };
 export type Feedback = { id: string; demoId: string; text: string; kind: "note" | "change" | "approval"; createdAt: string; name: string };
-export type SessionData = { title: string; client: string; template: Template; language: "en" | "pl"; stage: Stage; answers: Record<string, string>; demos: Demo[]; feedback: Feedback[]; approvedDemoId: string | null };
+export type ImportedSource = { channel: "telegram"; sourceSessionId: string; briefId: string; capturedAt: string; importedAt: string; transcript: {sender: "bot" | "user"; text: string}[]; assumptions: string[]; openQuestions: string[] };
+export type SessionData = { title: string; client: string; template: Template; language: "en" | "pl"; stage: Stage; answers: Record<string, string>; demos: Demo[]; feedback: Feedback[]; approvedDemoId: string | null; source?: ImportedSource };
 export type Session = SessionData & { id: string; revision: number; createdAt: string; updatedAt: string; expiresAt: string };
 export const demoChecks = ["Core client journey tested", "Fictional or approved demo data only", "Mobile layout and empty states checked", "Client access tested in a signed-out browser"];
-export function isDiscoveryComplete(s: SessionData) { return questions.every(q => Boolean(s.answers[q.key]?.trim())); }
+export function isDiscoveryComplete(s: SessionData) { return Boolean(s.source) || questions.every(q => Boolean(s.answers[q.key]?.trim())); }
 export function validDemoUrl(value: string) { try { const u = new URL(value); return u.protocol === "https:" && !u.username && !u.password && u.hostname !== "localhost" && !u.hostname.endsWith(".local"); } catch { return false; } }
