@@ -1,3 +1,4 @@
+import { evidenceReady, type Discovery } from './discovery';
 export const stages = ["Discovery", "Ready to build", "Demo review", "Changes requested", "Approved"] as const;
 export type Stage = typeof stages[number];
 export const templates = {
@@ -20,8 +21,17 @@ export const questions = [
 export type Demo = { id: string; version: number; url: string; summary: string; createdAt: string; checks: string[]; bundled?: boolean };
 export type Feedback = { id: string; demoId: string; text: string; kind: "note" | "change" | "approval"; createdAt: string; name: string };
 export type ImportedSource = { channel: "telegram"; sourceSessionId: string; briefId: string; capturedAt: string; importedAt: string; transcript: {sender: "bot" | "user"; text: string}[]; assumptions: string[]; openQuestions: string[] };
-export type SessionData = { title: string; client: string; template: Template; language: "en" | "pl"; stage: Stage; answers: Record<string, string>; demos: Demo[]; feedback: Feedback[]; approvedDemoId: string | null; source?: ImportedSource };
+export type SessionData = { title: string; client: string; template: Template; language: "en" | "pl"; stage: Stage; answers: Record<string, string>; demos: Demo[]; feedback: Feedback[]; approvedDemoId: string | null; source?: ImportedSource; discovery?: Discovery; discoveryChatEnabled?: boolean };
 export type Session = SessionData & { id: string; revision: number; createdAt: string; updatedAt: string; expiresAt: string };
 export const demoChecks = ["Core client journey tested", "Fictional or approved demo data only", "Mobile layout and empty states checked", "Client access tested in a signed-out browser"];
-export function isDiscoveryComplete(s: SessionData) { return Boolean(s.source) || questions.every(q => Boolean(s.answers[q.key]?.trim())); }
+export function isDiscoveryComplete(s: SessionData) { return s.discovery ? Boolean(s.discovery.confirmedAt) && evidenceReady(s.discovery) : Boolean(s.source) || questions.every(q => Boolean(s.answers[q.key]?.trim())); }
 export function validDemoUrl(value: string) { try { const u = new URL(value); return u.protocol === "https:" && !u.username && !u.password && u.hostname !== "localhost" && !u.hostname.endsWith(".local"); } catch { return false; } }
+export function attachDemoBlockers(input: { url: string; summary: string; checks: string[] }) {
+  const reasons: string[] = [];
+  if (!input.url.trim()) reasons.push("Enter a hosted https demo URL.");
+  else if (!validDemoUrl(input.url)) reasons.push("The URL must be https and cannot be localhost or include a password.");
+  if (input.summary.trim().length < 10) reasons.push("Write at least 10 characters for what the client should try.");
+  const remaining = demoChecks.filter((check) => !input.checks.includes(check)).length;
+  if (remaining) reasons.push(`Confirm every first-use check (${remaining} still unchecked).`);
+  return reasons;
+}

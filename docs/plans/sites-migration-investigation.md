@@ -1,10 +1,16 @@
 # Sites migration investigation
 
+> **2026-09-11 execution update:** The operator chose an empty new-client
+> production database instead of export/copy/remap. See
+> [new-client production separation](production-new-clients.md) for the new D1,
+> preview deployment and failed Clerk sign-in gate. No domain cutover ran.
+> The copy-based phases below are historical proposals, not the active plan.
+
 Investigation date: 2026-09-11. Research and planning only. No deploy, DNS change, production export, runtime-secret edit, or credential commit was performed.
 
 This document answers: what it would take to move Mirai off OpenAI Sites, what the options are, and which path is lowest-risk. Evidence comes from this repository unless a citation names an official Cloudflare or Clerk page.
 
-Related current-state docs: [MVP](../MVP.md), [development](../DEVELOPMENT.md), [working agreements](../../AGENTS.md), [discovery chat plan](discovery-chat.md). [North-star](../NORTH-STAR.md) is future product direction, not implemented behavior.
+Related current-state docs: [MVP](../MVP.md), [development](../DEVELOPMENT.md), [working agreements](../../AGENTS.md), discovery chat plan (on the separate conversation-update branch). [North-star](../NORTH-STAR.md) is future product direction, not implemented behavior.
 
 ---
 
@@ -342,7 +348,7 @@ Prerequisites: none beyond current local workflow.
 
 - [x] Keep publishing through Sites. Do not change the production `project_id` in `.openai/hosting.json`.
 - [x] Add repeatable local DB setup / fictional seed (`npm run db:local`, [DEVELOPMENT.md](../DEVELOPMENT.md)).
-- [ ] Add `tests/discovery-chat.mjs` to `verify.yml` (offline; conversation-update branch).
+- [x] Add `tests/discovery-chat.mjs` to `verify.yml` (offline; ported onto this checkout).
 - [ ] Inventory production `owner_id` values (**operator-only** read). Confirm whether any row already uses a Clerk `user_…` id.
 - [ ] Decide discovery chat: deploy it on Sites later, or wait until after hosting cutover. Default: **wait**, so cutover stays hosting-only.
 
@@ -373,6 +379,14 @@ Prerequisites: operator Cloudflare account; zone access for a staging hostname *
 - [x] Apply `0000` + `0001` on empty staging D1. Do not apply `0002`. Do not load `local_seedy` or production rows.
 
 Go: staging homepage, Clerk sign-in, anonymous `/api/sessions` = 401, fictional invitation isolation, revision 409, approval reset on new demo version.
+
+Operator walkthrough notes (2026-09-11, empty staging D1):
+
+- Clerk sign-in on the workers.dev origin shows a blank workspace. That is expected; do not copy production rows.
+- Playbook **+ New session** does not attach bundled `/demo/{id}` UIs. Those rows exist only after Telegram import (`bundled: true`).
+- **Share this version** stays disabled until all four first-use checks are ticked (and the URL/summary pass). The attach dialog now states each blocker instead of failing silently.
+- Attaching `https://mirai-staging.kleczynski11312.workers.dev/test-try` records a hosted demo version for approval workflow. Opening that URL 404s because attach does not create or verify a page. That is not a Clerk or D1 failure.
+- Bundled demo Save / stale-revision 409 remains blocked on this empty database unless a **fictional** three-playbook import is used. Do not import production Telegram transcripts here.
 
 ### Phase 3 — Production D1 copy into a new database (operator-only)
 

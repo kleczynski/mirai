@@ -9,14 +9,14 @@ r=await call('/api/sessions','POST',{title:'Test session lifecycle',client:'Fict
 r=await call('/api/documents?id='+id);assert.equal(r.status,409);
 r=await call('/api/client','GET',undefined,'a'.repeat(64),false);assert.equal(r.status,404);
 const keys=['business','problem','workflow','frequency','tools','outcome','constraints','delivery'];
-for(const key of keys){r=await call('/api/client','POST',{action:'answer',key,answer:'Fictional evidence for '+key},token,false);assert.equal(r.status,200,JSON.stringify(r));}
+for(const key of keys){const current=await call('/api/client','GET',undefined,token,false);r=await call('/api/client','POST',{action:'answer',revision:current.value.revision,key,answer:'Fictional evidence for '+key},token,false);assert.equal(r.status,200,JSON.stringify(r));}
 r=await call('/api/client','GET',undefined,token,false);assert.equal(r.value.stage,'Ready to build');assert.equal(Object.keys(r.value.answers).length,8);
 r=await call('/api/documents?id='+id);assert.equal(r.status,200);assert.ok(r.value.includes('Fictional evidence for outcome'));
 const demo={action:'demo',id,url:'https://example.com',summary:'Local test fixture only: verify demo version lifecycle.',checks:['Core client journey tested','Fictional or approved demo data only','Mobile layout and empty states checked','Client access tested in a signed-out browser']};
 r=await call('/api/sessions','PATCH',{...demo,url:'javascript:alert(1)'});assert.equal(r.status,400);
 r=await call('/api/sessions','PATCH',demo);assert.equal(r.status,200,JSON.stringify(r));
 r=await call('/api/client','GET',undefined,token,false);const demoId=r.value.demos[0].id;
-r=await call('/api/client','POST',{action:'answer',key:'problem',answer:'Attempt to alter locked discovery'},token,false);assert.equal(r.status,409);
+r=await call('/api/client','POST',{action:'answer',revision:r.value.revision,key:'problem',answer:'Attempt to alter locked discovery'},token,false);assert.equal(r.status,409);
 r=await call('/api/client','POST',{action:'feedback',demoId,kind:'approval',text:'Approved fixture version',name:'Test client'},token,false);assert.equal(r.status,200);
 r=await call('/api/documents?id='+id+'&kind=deployment');assert.equal(r.status,200);assert.ok(r.value.includes(demoId));
 r=await call('/api/sessions','PATCH',demo);assert.equal(r.status,200);
