@@ -1,4 +1,20 @@
-# vinext-starter
+# Mirai — FDE control plane
+
+Live: https://mirai.party · Original Sites address: https://mirai-control-plane.wishfishdev.chatgpt.site
+
+Mirai connects discovery, a working demo, client feedback and approved deployment guidance in one private session. Three completed Telegram examples are already imported in the live database: Stolarz, PC-Market and Dental.
+
+- [Current app workflow and limits](docs/MVP.md)
+- [Develop outside Codex](docs/DEVELOPMENT.md)
+- [Agent working agreements](AGENTS.md) and [guidance rationale](docs/AGENT-GUIDANCE.md)
+- [North-star direction](docs/NORTH-STAR.md)
+
+The app runs on Sites with Cloudflare D1. Supabase and autonomous AI builds are not implemented. Local development works in an ordinary editor and terminal; see the development guide before moving hosting.
+
+## Starter runtime reference
+
+The inherited runtime notes below describe the underlying tooling. Mirai's product and schema are documented above.
+
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 
@@ -43,7 +59,7 @@ Local tool usage metrics are disabled by default. Set `WRANGLER_SEND_METRICS=tru
 - `.openai/hosting.json` declares optional Sites D1 and R2 bindings
 - `vite.config.ts` simulates declared bindings for local development
 - `db/index.ts` reads the D1 binding from the Cloudflare Worker environment
-- `db/schema.ts` starts intentionally empty
+- `db/schema.ts` defines Mirai sessions and demo state
 - `@cloudflare/workers-types` provides Worker types; `cloudflare-env.d.ts` declares optional `DB`/`BUCKET` bindings—update these declarations if binding names change
 - `examples/d1/` contains an optional D1 example surface
 - `drizzle.config.ts` supports local migration generation when needed

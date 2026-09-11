@@ -1,6 +1,21 @@
 # Mirai MVP
 
-Mirai is the operator's control plane. Client demos are separate Sites apps.
+Mirai is the operator's control plane. The three Telegram examples have working demos bundled into this app; new customer demos can also be built separately and linked to a session. This document describes the implemented MVP as of 2026-09-10, not the future roadmap.
+
+## At a glance
+
+Open https://mirai.party. The original https://mirai-control-plane.wishfishdev.chatgpt.site address also serves the app. The owner signs in; friends use private invitation links without creating accounts. Sign-in cookies are origin-specific, so the new domain may require signing in again.
+
+The workspace now contains Stolarz, PC-Market and Dental sessions imported from the completed Telegram conversations. Each has original messages, assumptions, open questions, build context and one working demo. The import did not invent client feedback or approval. Demo input changes use an explicit Save action and persist in the session's database state.
+
+The complete loop is: invite → discovery → build context → demo → version-specific feedback → revision → approval → deployment document. The final document is guidance; it does not itself deploy a customer product.
+
+| Person | Current actions |
+| --- | --- |
+| Operator | Create sessions, share/revoke links, review evidence, export briefs, attach demo versions, read feedback and export an approved handoff |
+| New client | Open their private link, answer guided questions, later try the demo and leave notes or a decision |
+| Existing Telegram friend | Open their private link and try the already-linked demo, then submit notes, request changes or approve |
+| Developer | Work from the exported brief, validate a build, return its URL/version to Mirai |
 
 ## Operator journey
 
@@ -34,6 +49,10 @@ The optional browser WebMCP surface lists sessions and opens the creation form. 
 
 No autonomous Codex job dispatch, LLM interviewing, email notifications, attachments or billing. The operator transfers briefs to Codex and demo URLs back to Mirai. Friends use possession-based invitation access, with no separate identity verification. The list shows up to 500 most recently updated sessions. Feedback is capped at 1,000 entries per session. This MVP is intended for small, fictional or approved demo data; retention and customer compliance requirements must be specified before production client use.
 
+There is no live Telegram bot sync: the three source conversations were imported once through a private JSON upload. There is no outcome measurement or two-week pilot tracking yet. Current demo approval is a version-scoped acknowledgement, not evidence of measured business benefit.
+
+Bundled demo code is shared by template and updated with the control plane. It is not an immutable archived build per session. External demo links likewise do not guarantee an immutable artifact. Before customer production delivery, add source/build provenance and a release policy that prevents a later deployment silently changing an approved version.
+
 The browser WebMCP contract was verified on the local preview: both tools registered, listing returned the persisted local fixture, an unexpected input property was rejected, and starting a session opened the actual creation dialog. The broader visual and browser interaction flow was not tested.
 
 ## Telegram examples and bundled demos
@@ -47,3 +66,11 @@ For these three examples, working demos are bundled at /demo/[sessionId]. They s
 - Dental: browser-supported Polish dictation with explicit fictional-data acknowledgement, typed-text fallback, verbatim draft with tooth-number extraction, clinician edits/review and text export. No diagnostic AI, NFZ assignment or Prodentis integration. Browser dictation may use the browser vendor's remote recognition service.
 
 Calculation tests cover 100 generated cutting layouts, kerf separation, grain constraints, exact fit and oversize rejection; retail EAN matching, quantity rounding, supplier selection and CSV edge cases; and dental source preservation and explicit missing-information markers. API checks verify import deduplication, per-session demo access, persistence, revision conflicts and document gates. Browser voice recognition is optional and has not been validated against real clinical speech.
+
+## Custom domain
+
+On 2026-09-10, with explicit owner approval, the root A record pointing to 92.5.122.200 was replaced by the Sites-provided addresses 162.159.143.30 and 172.66.3.26, DNS-only. Existing app, studio and wildcard preview subdomains were preserved. Sites reports domain and SSL active. The root page, private Stolarz session/demo reads, anonymous owner-API denial and sign-in redirect were checked through mirai.party. A full fresh owner OAuth round trip on the custom domain was not exercised by the agent.
+
+Existing private links on the Sites address continue to work. The same /s#token path can be shared on mirai.party; keep the token private. New invitation links use the origin from which the operator is using the workspace. No www alias was added.
+
+Rollback, if required: restore the previous root A record 92.5.122.200 with proxy enabled and remove the two new root A records, after confirming the old service is still available. This is an operations note, not authorization to roll back automatically.
