@@ -1,0 +1,10 @@
+{
+  "name": "mirai-staging",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mirai-staging",
+      "database_id": "360d76c0-0fec-42aa-9b6f-b0f240baaaae"
+    }
+  ]
+}

@@ -334,7 +334,7 @@ This option is only justified if the operator later rejects Cloudflare itself. I
 
 Phased. Each phase has a prerequisite. Production DNS does not move until Phase 5.
 
-**Progress (2026-09-11, code only, not deployed).** This branch is Sites-exit Phase 0/1 without the conversation-update slice: `npm run db:local` (optional `--seed`), owner UI uses Clerk `/sign-in` and Clerk sign-out, `owner()` is Clerk-only when `CLERK_SECRET_KEY` is set, and `oai-authenticated-user-*` is ignored unless the portable loopback mock is active (`MIRAI_LOOPBACK_OWNER_AUTH` from local Vite config + loopback `Host`). Production `project_id` is unchanged. Offline `tests/discovery-chat.mjs` in `verify.yml` waits for the conversation-update branch. Still operator-owned: production `owner_id` inventory, development D1 remap, Cloudflare account / D1 export, committed staging Wrangler IDs.
+**Progress (2026-09-11).** Phase 0/1 is on `main` (PR #8). Phase 2 started on the operator Cloudflare account that cannot see Sites D1: empty `mirai-staging` D1 `360d76c0-0fec-42aa-9b6f-b0f240baaaae` has `0000`+`0001` only; bindings are `deploy/staging.json`. Production `project_id` is unchanged. No staging Worker deploy yet (needs development Clerk secrets). Discovery and `0002` stay off. Still operator-owned: production `owner_id` inventory, development D1 remap, Sites D1 export, first `wrangler` deploy of `mirai-staging`.
 
 ### Phase 0 — Stay on Sites; reduce lock-in (no cutover)
 
@@ -365,12 +365,12 @@ No-go: production Clerk enabled without remap (empty workspace).
 
 Prerequisites: operator Cloudflare account; zone access for a staging hostname **or** willingness to use `workers.dev`; no production DNS change.
 
-- Create Worker `mirai-staging` and D1 `mirai-staging`.
-- Commit a Wrangler config (or env-specific configs) with real staging D1 IDs — not the placeholder.
-- `npm run build` and `wrangler deploy` to staging (**operator-only** credentials).
-- Alternative: Workers Builds with deploy command `npx wrangler versions upload` on non-main ([Builds](https://developers.cloudflare.com/workers/ci-cd/builds/)).
-- Set staging secrets. Clerk development instance; authorized origins include the staging URL.
-- Apply `0000` + `0001` (and `0002` only if testing chat) on empty staging D1. Load fictional fixtures, not production.
+- [x] Create D1 `mirai-staging` (`360d76c0-0fec-42aa-9b6f-b0f240baaaae`, WEUR, empty of product rows).
+- [x] Commit staging bindings (`deploy/staging.json`) and a prepare script that overlays them onto the Vinext-generated Wrangler file without the loopback auth var.
+- [ ] Create / `wrangler deploy` Worker `mirai-staging` (**operator-only** credentials; default hostname `*.workers.dev`).
+- [ ] Alternative later: Workers Builds with deploy command `npx wrangler versions upload` on non-main ([Builds](https://developers.cloudflare.com/workers/ci-cd/builds/)).
+- [ ] Set staging secrets. Clerk development instance; authorized origins include the staging URL.
+- [x] Apply `0000` + `0001` on empty staging D1. Do not apply `0002`. Do not load `local_seedy` or production rows.
 
 Go: staging homepage, Clerk sign-in, anonymous `/api/sessions` = 401, fictional invitation isolation, revision 409, approval reset on new demo version.
 
