@@ -1,6 +1,6 @@
 'use client';
-import { SignIn } from "@clerk/react";
 import "../../auth.css";
+import { MiraiSignIn } from "../../clerk-provider";
 
 export default function SignInPage() {
   return (
@@ -15,7 +15,7 @@ export default function SignInPage() {
       </div>
       <div className="auth-card">
         <div className="auth-card-heading"><p>Private workspace</p><h2>Welcome back</h2></div>
-        <SignIn appearance={{ variables: { colorPrimary: '#315bdd', borderRadius: '14px' }, elements: { card: 'auth-clerk-card', headerTitle: 'auth-clerk-title', formButtonPrimary: 'auth-clerk-button' } }} />
+        <MiraiSignIn />
       </div>
       <p className="auth-footer">Mirai / personal operator workspace</p>
     </main>
