@@ -114,6 +114,18 @@ merge to `main`, change `mirai.party`, copy data to production, or promote the
 version automatically. Agents should use development to test UI, Clerk login,
 API behavior and fictional fixtures.
 
+### Operator-owned staging (Phase 2, not production)
+
+An empty D1 `mirai-staging` (`360d76c0-0fec-42aa-9b6f-b0f240baaaae`) exists in
+the operator Cloudflare account. Migrations `0000` and `0001` are applied;
+`0002` and production/Sites rows are not. Bindings are in `deploy/staging.json`.
+`npm run build` then `npm run deploy:staging:prepare` writes
+`dist/server/wrangler.staging.json` from the Vinext output, replacing the
+placeholder D1 and stripping `MIRAI_LOOPBACK_OWNER_AUTH`. That file is not a
+`mirai.party` deploy config. Staging secrets (development Clerk +
+`MIRAI_OWNER_EMAIL`) are set with `wrangler secret put` at deploy time; they
+are not in the repo. Do not seed `local_seedy` onto this database.
+
 Keep production and development runtime variables separate. In particular,
 never put production Clerk keys or production data into the development Site.
 The development deployment currently needs its own `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
@@ -137,4 +149,13 @@ Then test invitation isolation, cookie/origin behavior, approvals, saved demos, 
 
 ## Recommended next developer work
 
-Local D1 setup (`npm run db:local`) is in place. Offline discovery-chat CI lands with the separate conversation-update branch. Remaining hosting-migration work is operator-owned: production `owner_id` inventory, development D1 remap if that database still uses Sites ids, and a committed Wrangler config with real staging IDs (not this generated placeholder). Add a release manifest linking demo versions to immutable source/build revisions before introducing autonomous builds. Keep customer products in customer-owned repositories and accounts; retain evidence and delivery history in Mirai.
+Local D1 setup (`npm run db:local`) is in place. Staging D1 and a prepare-only
+Wrangler overlay exist; the Worker is not deployed until development Clerk
+secrets are set. Offline discovery-chat CI lands with the separate
+conversation-update branch. Remaining operator-owned work: production
+`owner_id` inventory, development D1 remap if that database still uses Sites
+ids, first `wrangler` deploy of `mirai-staging` to `workers.dev`, and Sites D1
+export access before any production copy. Add a release manifest linking demo
+versions to immutable source/build revisions before introducing autonomous
+builds. Keep customer products in customer-owned repositories and accounts;
+retain evidence and delivery history in Mirai.
