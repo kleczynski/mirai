@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DiscoveryClient from './discovery-client';
 import { ArrowRight, Check, ExternalLink, MessageSquare, Send, ShieldCheck, RotateCw } from 'lucide-react';
 import { Brand, History, api } from '../workspace';
@@ -19,12 +19,25 @@ export default function ClientSession() {
   const [feedback, setFeedback] = useState('');
   const [name, setName] = useState('');
   const [formConflict, setFormConflict] = useState(false);
+  const loadController = useRef<AbortController | null>(null);
   async function load(t: string) {
+    loadController.current?.abort();
+    const controller = new AbortController();
+    loadController.current = controller;
+    const timer = setTimeout(() => controller.abort(), 10000);
     try {
-      const session: Session = await api<Session>('/api/client', 'GET', undefined, t);
+      const response = await fetch('/api/client', { headers: { Authorization: `Bearer ${t}` }, signal: controller.signal });
+      const session = await response.json() as Session & { error?: string };
+      if (!response.ok) throw new Error(session.error || 'Could not open your session. Try again.');
+      if (loadController.current !== controller) return null;
       setS(session); setError(''); return session;
-    } catch (e) { setError((e as Error).message); return null; }
-    finally { setLoading(false); }
+    } catch (e) {
+      if (loadController.current === controller) setError(controller.signal.aborted
+        ? 'Opening the session took longer than ten seconds. Try again. / Otwarcie sesji trwało dłużej niż dziesięć sekund. Spróbuj ponownie.'
+        : (e as Error).message);
+      return null;
+    }
+    finally { clearTimeout(timer); if (loadController.current === controller) setLoading(false); }
   }
   useEffect(() => {
     const t = location.hash.slice(1);
@@ -36,6 +49,7 @@ export default function ClientSession() {
         setName(session.client);
       }
     });
+    return () => { loadController.current?.abort(); loadController.current = null; };
   }, []);
   const pl = s?.language === 'pl';
   const tr = (en: string, polish: string) => pl ? polish : en;

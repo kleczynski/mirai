@@ -1,6 +1,6 @@
 # Develop Mirai outside Codex
 
-Verified against the checkout on 2026-09-10. Any editor and terminal can edit and run this project; Codex is not a runtime dependency. The hosted deployment currently depends on Sites for database provisioning and owner authentication.
+Updated after the 2026-09-11 release. Any editor and terminal can edit and run this project; Codex is not a runtime dependency. Production and staging use operator-owned Cloudflare Workers, separate D1 databases and Clerk. The [operations runbook](plans/production-new-clients.md) is the current release reference.
 
 ## Stack and map
 
@@ -97,7 +97,11 @@ With `MIRAI_DISCOVERY_ENABLED=true` in ignored `.dev.vars` (no API key required 
 
 ```sh
 node tests/discovery-flow.mjs
+node tests/discovery-boundary.mjs
 ```
+
+The boundary suite holds a fictional local request body open and checks the real
+9.5-second route deadline. It makes no provider call.
 
 Optional localhost browser smokes, skipped unless Playwright is installed.
 They are not in `verify.yml`.
@@ -115,75 +119,32 @@ For schema changes: edit db/schema.ts, run `npm run db:generate`, review the gen
 
 ## Publishing versus editing
 
-### Development environment
+Production `https://mirai.party` already routes to `mirai-production`. Staging is
+`https://mirai-staging.kleczynski11312.workers.dev`. The original Sites hostname
+is a separate legacy dataset. Do not repeat cutover, copy legacy rows or point
+fixture scripts at either production host.
 
-Development has left Sites. Do not deploy or test hosted changes on
-`https://mirai-development.wishfishdev.chatgpt.site` or any `*.chatgpt.site` URL.
+Use the [operations runbook](plans/production-new-clients.md) for account/database
+IDs, deployed versions, caps, verification evidence and rollback. Inspect actual
+schema before applying migrations: `0000`–`0002` exist on both current Workers.
+No new schema migration is needed for saved-answer background processing.
 
-| Env | Host | Notes |
-| --- | --- | --- |
-| Local | `http://localhost:5173` | Clerk if `CLERK_SECRET_KEY` is set; else loopback mock for HTTP tests only |
-| Development / staging | `https://mirai-staging.kleczynski11312.workers.dev` | Operator-owned Worker + D1. Clerk development. Empty of product rows. `0000`+`0001` applied. **No `0002` unless the operator later approves it.** |
-| Live production | `https://mirai.party` (Sites) | Still Sites. Eight old sessions stay there. Do not cut over |
+Build the exact source with the correct Clerk publishable key. For staging,
+`npm run build` then `npm run deploy:staging:prepare` writes the checked overlay
+`dist/server/wrangler.staging.json`. Production uses an isolated source checkout
+without local environment files; build with the production publishable key, then
+run `node scripts/prepare-production-deploy.mjs /absolute/path/to/isolated-build`.
+The raw generated `dist/server/wrangler.json` has local placeholder bindings and
+must never be deployed directly.
 
-Local preview is the normal agent feedback loop for product work. A successful
-local check does not deploy, merge, or promote anything to `mirai.party`.
+Production approval is separate from staging verification. Preserve existing
+production runtime secrets and custom-domain mapping; never substitute development
+Clerk or OpenAI credentials. Source publication to a public repository also requires
+appropriate user authorization. Do not publish ignored outputs or private evidence.
 
-### Operator-owned staging (Phase 2, not production)
-
-An empty D1 `mirai-staging` (`7fece159-c3e2-4394-953d-60679fb92b33`) exists in
-the operator Cloudflare account Wrangler uses. Migrations `0000` and `0001` are applied;
-`0002` and production/Sites rows are not. Bindings are in `deploy/staging.json`.
-`npm run build` then `npm run deploy:staging:prepare` writes
-`dist/server/wrangler.staging.json` from the Vinext output, replacing the
-placeholder D1 and stripping `MIRAI_LOOPBACK_OWNER_AUTH`. That file is not a
-`mirai.party` deploy config. Staging secrets (development Clerk +
-`MIRAI_OWNER_EMAIL`) are set with `wrangler secret put` at deploy time; they
-are not in the repo. Do not seed `local_seedy` onto this database.
-
-Keep production and development runtime variables separate. In particular,
-never put production Clerk keys or production data into the development Site.
-The development deployment currently needs its own `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
-`CLERK_SECRET_KEY` and `MIRAI_OWNER_EMAIL` runtime values.
-
-### Production release
-
-For the operator-authorized new-client separation run, see
-[production preview status and operator runbook](plans/production-new-clients.md).
-The new `mirai-production` Worker and empty D1 exist, but Clerk browser sign-in
-failed. Sites still serves `mirai.party`; do not cut over or copy the eight old
-sessions. `deploy/production.json` and `scripts/prepare-production-deploy.mjs`
-prepare that separate preview target without changing the Sites manifest.
-
-Production remains `https://mirai.party`. A production release requires an
-explicit operator decision after development testing. The agent must deploy
-the exact reviewed commit and saved version to the production project, then
-verify the production deployment. A green development deployment is evidence
-for review, not production authorization.
-
-**Keep Sites hosting:** develop in any editor, validate locally, then use an authenticated Sites publishing workflow for this existing project. The established connector sequence is source credential → exact source push → saved build artifact → deployment. Do not assume a plain push publishes: that requires a separately authorized publish-on-push setting. This repository has no standalone CI release workflow or durable publishing credential. Do not put short-lived Sites credentials into a remote URL or checked-in configuration.
-
-**Move hosting to your own Cloudflare account:** treat this as a migration project, not `wrangler deploy` on the generated local configuration. That configuration has a placeholder D1 ID. Provision the real database, configure production bindings and secrets, transfer data through an authorized export/import path, and implement a verified authentication provider. Replace the Sites header-based identity adapter and reserved sign-in routes. Never expose the current trusted-header helper directly to the public Internet. Preserve owner IDs through an explicit mapping so existing records remain accessible.
-
-Then test invitation isolation, cookie/origin behavior, approvals, saved demos, backups/restoration and rollback in staging before switching DNS. A custom domain alone does not move hosting or database ownership. A Sites backup/export and a standalone CI pipeline have not been configured here.
-
-**Move to Supabase/Vercel or a conventional server:** additionally replace Cloudflare's env/DB adapter and SQLite-specific queries/migrations with the chosen database and runtime. Supabase was allowed in the original brief but is not used today. Do not describe that move as a configuration-only change.
-
-## Recommended next developer work
-
-Local D1 setup (`npm run db:local`) applies `0002` when `discovery_requests` is
-absent and skips it when the table exists. Staging Worker
-`https://mirai-staging.kleczynski11312.workers.dev` is deployed against D1
-`7fece159-c3e2-4394-953d-60679fb92b33` with development Clerk secrets.
-Discovery chat is implemented locally and covered in CI offline; it is not
-enabled on staging or `mirai.party`. Remaining operator-owned work: whether to
-enable chat after local gates; whether to apply `0002` on staging or the empty
-new-client D1 in a later approved release; Clerk allowed origin for the
-workers.dev URL; production `owner_id` inventory; and Sites D1 export access
-before any production copy. Add a release manifest linking demo versions to
-immutable source/build revisions before introducing autonomous builds. Keep
-customer products in customer-owned repositories and accounts; retain evidence
-and delivery history in Mirai.
+Before future autonomous builds, add immutable demo source/build provenance.
+Customer demos remain customer-owned; shared bundled implementations require
+review of existing version/approval implications before changes.
 
 ## Discovery chat development
 
@@ -191,11 +152,13 @@ Chat is an opt-in rollout alongside the form. In ignored `.dev.vars`, add
 `MIRAI_DISCOVERY_ENABLED=true`. The topic form and local tests work without an
 API key. For live interviewing, configure `MIRAI_OPENAI_API_KEY` as a
 server-only secret. Do not paste keys into source, client code, tracked files
-or tool output. Do not put `MIRAI_DISCOVERY_*` or `MIRAI_OPENAI_API_KEY` on
-staging or production unless the operator explicitly asks after local gates.
+or tool output. The operator approved this rollout on staging and production. Future environment
+or budget changes still need matching user scope; see the current runbook.
 
 Optional values: `MIRAI_DISCOVERY_MODEL=gpt-5.6-terra` (the only approved
-model), `MIRAI_DISCOVERY_SESSION_CAP_USD=1` (can lower, not raise, the $1 cap).
+model), `MIRAI_DISCOVERY_SESSION_CAP_USD=1` (can lower, not raise, the $1 cap),
+`MIRAI_DISCOVERY_WORKSPACE_CAP_USD=2` (database-wide lifetime cap, can only lower).
+Both current Workers set these to $0.25 and $1 respectively.
 There is no automatic fallback model. See
 [design and limits](plans/discovery-chat.md).
 
@@ -203,15 +166,44 @@ There is no automatic fallback model. See
 database and skips it when `discovery_requests` already exists. It refuses
 `--remote`.
 
+An explicitly authorized two-call paid smoke is available. Its dry run makes
+no provider calls:
+
+```sh
+node --import ./tests/typescript-loader.mjs scripts/discovery-paid-smoke.mjs --dry-run
+```
+
+After operator authorization, with `MIRAI_OPENAI_API_KEY` in ignored `.dev.vars`
+or the process environment:
+
+```sh
+MIRAI_PAID_TEST_CALLS=2 node --import ./tests/typescript-loader.mjs scripts/discovery-paid-smoke.mjs
+```
+
+This uses the real approved provider and application service with isolated
+in-memory SQLite and two fictional English/Polish cases. It verifies the saved
+acknowledgement within ten seconds and awaits bounded background synthesis. It does not touch a
+hosted database. It records safe metadata in ignored
+`outputs/discovery-paid-smoke.json`, reserves each attempt before sending, and
+refuses to repeat an existing run. Timeouts count as attempts. Do not remove
+the report to rerun without new authorization. After separate authorization,
+`MIRAI_PAID_TEST_RUN` can name a new run (lowercase letters, digits and hyphens);
+each run keeps a separate report and retains the two-attempt limit. All saved
+paid-smoke reports share a hard $1 cumulative accounting budget, including
+reservations for unknown usage. The shared
+lock prevents overlapping runs. A failed check exits nonzero;
+inspect results before deploying. These two cases do not establish full live
+interview or real-microphone coverage.
+
 Owner authentication stays Clerk-only when `CLERK_SECRET_KEY` is set. The
 `/signin-with-chatgpt` loopback mock is for localhost HTTP tests when that
 secret is unset. Hosted Workers must not treat `oai-authenticated-user-*` as
-identity. Chat remains undeployed on `mirai.party`.
+identity. Chat is enabled on both current Workers; client evidence still requires operator readiness confirmation.
 
 ## Pre-client lifecycle: automated vs still human
 
-The operator’s live gate before a real client on `https://mirai.party` is now
-partly automated. None of these default scripts target production or staging.
+The operator’s lifecycle gate is partly automated locally. No fixture-writing script
+should be pointed at `https://mirai.party`. None of these default scripts target production or staging.
 
 | Operator check | Automated? | Where |
 | --- | --- | --- |

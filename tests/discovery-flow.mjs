@@ -8,6 +8,27 @@ async function call(path, method = 'GET', data, token, owner = false) {
 }
 async function create() { const r = await call('/api/sessions', 'POST', { title: 'Fictional creative chat HTTP test', client: 'Fictional reviewer', template: 'custom', language: 'en' }, undefined, true); assert.equal(r.status, 201); return r.value; }
 const a = await create(); const b = await create();
+// Finishing is available without a paid provider, stays in Discovery, and can
+// be retried without generating another transcript entry or changing revision.
+const finishSession = await create();
+let finishRead = await call('/api/client', 'GET', undefined, finishSession.token);
+let finishResult = await call('/api/client/discovery-chat', 'POST', { action: 'start', revision: finishRead.value.revision, requestId: crypto.randomUUID() }, finishSession.token);
+assert.equal(finishResult.status, 200);
+const finishBody = { action: 'finish', revision: finishResult.value.revision, requestId: crypto.randomUUID() };
+finishResult = await call('/api/client/discovery-chat', 'POST', finishBody, finishSession.token);
+assert.equal(finishResult.status, 200);
+assert.equal(finishResult.value.discovery.interview.status, 'review');
+assert.equal(finishResult.value.stage, 'Discovery');
+const finishRetry = await call('/api/client/discovery-chat', 'POST', finishBody, finishSession.token);
+assert.equal(finishRetry.status, 200);
+assert.equal(finishRetry.value.revision, finishResult.value.revision);
+const afterFinish = await call('/api/client/discovery-chat', 'POST', { action: 'message', text: 'A ninth question must not appear.', revision: finishResult.value.revision, requestId: crypto.randomUUID() }, finishSession.token);
+assert.equal(afterFinish.status, 409);
+const unfinishedBrief = await call('/api/documents?id=' + finishSession.id, 'GET', undefined, undefined, true);
+assert.equal(unfinishedBrief.status, 409, 'Finishing never bypasses evidence or operator confirmation');
+const finishEdit = await call('/api/client/discovery-chat', 'POST', { action: 'edit', topic: 'context', text: 'Fictional art workshop operated by volunteers.', revision: finishResult.value.revision, requestId: crypto.randomUUID() }, finishSession.token);
+assert.equal(finishEdit.status, 200);
+assert.equal(finishEdit.value.discovery.interview.status, 'review');
 async function read() { const r = await call('/api/client', 'GET', undefined, a.token); assert.equal(r.status, 200); return r.value; }
 async function edit(action) { const s = await read(); return call('/api/client/discovery-chat', 'POST', { ...action, revision: s.revision, requestId: crypto.randomUUID() }, a.token); }
 let r = await edit({ action: 'start' }); assert.equal(r.status, 200, r.value.error); assert.equal(r.value.discovery.transcript[0].role, 'assistant');
@@ -40,4 +61,4 @@ r = await call('/api/sessions', 'PATCH', { action: 'confirm-discovery', id: a.id
 r = await call('/api/sessions', 'PATCH', { action: 'demo', id: a.id, url: 'https://example.com/fictional-chat-demo', summary: 'Fictional local lifecycle fixture for creative discovery.', checks: ['Core client journey tested', 'Fictional or approved demo data only', 'Mobile layout and empty states checked', 'Client access tested in a signed-out browser'] }, undefined, true); assert.equal(r.status, 200);
 r = await edit({ action: 'edit', topic: 'context', text: 'Attempt after demo' }); assert.equal(r.status, 409);
 r = await call('/api/client', 'GET', undefined, b.token); assert.equal(r.value.discovery, undefined);
-console.log('Passed local HTTP: owner-only observability, bearer isolation, topic and original-answer edits, stale revision rejection, creative readiness with owner confirmation, brief gating, and post-demo lock. No model calls.');
+console.log('Passed local HTTP: finish/retry/review editing without a provider, owner-only observability, bearer isolation, topic and original-answer edits, stale revision rejection, creative readiness with owner confirmation, brief gating, and post-demo lock. No model calls.');

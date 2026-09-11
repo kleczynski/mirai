@@ -1,5 +1,13 @@
 # Sites migration investigation
 
+> **Historical investigation — superseded.** Production already routes to the
+> operator-owned `mirai-production` Worker. Follow the [current operations
+> runbook](production-new-clients.md), verified after the 2026-09-11 discovery
+> release. The copy/remap proposal, failed-Clerk status and cutover checklist below
+> are historical, not remaining work. Do not replay DNS changes, import legacy
+> data or use the separate Sites database as an automatic rollback target.
+
+
 > **2026-09-11 execution update:** The operator chose an empty new-client
 > production database instead of export/copy/remap. See
 > [new-client production separation](production-new-clients.md) for the new D1,

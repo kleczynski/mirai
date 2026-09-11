@@ -1,10 +1,11 @@
 import { env } from 'cloudflare:workers';
+import { recoverDiscoveryProcessing } from '@/lib/discovery-service';
 import { correctTopic, legacyTopics } from '@/lib/discovery';
 import { z } from "zod";
 import { ApiError, body, clientSession, failure, json, save, hash, database } from "@/lib/server";
 import { isDiscoveryComplete, questions } from "@/lib/model";
 export const dynamic = "force-dynamic";
-export async function GET(request: Request) { try { return json({ ...await clientSession(request), discoveryChatEnabled: env.MIRAI_DISCOVERY_ENABLED === 'true' }); } catch (e) { return failure(e); } }
+export async function GET(request: Request) { try { return json({ ...await recoverDiscoveryProcessing(database(), await clientSession(request), await hash(request.headers.get('authorization')!.replace(/^Bearer /, ''))), discoveryChatEnabled: env.MIRAI_DISCOVERY_ENABLED === 'true' }); } catch (e) { return failure(e); } }
 const mutation = z.discriminatedUnion("action", [z.object({ action: z.literal("answer"), revision: z.number().int().nonnegative(), key: z.string().refine(k => questions.some(q => q.key === k)), answer: z.string().trim().min(3).max(4000) }), z.object({ action: z.literal("feedback"), demoId: z.string().uuid(), kind: z.enum(["note", "change", "approval"]), text: z.string().trim().min(3).max(4000), name: z.string().trim().min(2).max(100) })]);
 export async function POST(request: Request) {
   try {

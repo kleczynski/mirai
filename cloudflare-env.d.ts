@@ -9,5 +9,6 @@ declare namespace Cloudflare {
     MIRAI_OPENAI_API_KEY?: string;
     MIRAI_DISCOVERY_MODEL?: string;
     MIRAI_DISCOVERY_SESSION_CAP_USD?: string;
+    MIRAI_DISCOVERY_WORKSPACE_CAP_USD?: string;
   }
 }

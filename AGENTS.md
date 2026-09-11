@@ -14,7 +14,7 @@ Mirai is one operator's FDE delivery workspace. Preserve the chain from discover
 
 ## Product and data invariants
 
-- The hosted runtime is React/Vinext on Sites Workers with D1. Supabase and an LLM service are not wired in.
+- The hosted runtime is React/Vinext on operator-owned Cloudflare Workers with separate production/staging D1 and Clerk. Discovery uses the approved Terra provider. Supabase and autonomous builds are not wired in. Read `docs/plans/production-new-clients.md` for current release facts; Sites is a separate legacy dataset.
 - Authorize owner requests on the server. Client tokens must resolve to the exact requested session. Never accept public identity headers as trusted outside Sites' authenticated dispatch boundary.
 - Keep invitation tokens out of logs, tracked files and public assets. Persist only hashes; preserve expiry, rotation and revocation behavior.
 - Use parameterized queries and optimistic revision checks. A conflicting save must preserve the user's edits and explain recovery.
@@ -29,14 +29,17 @@ Use docs/DEVELOPMENT.md's commands. Match checks to the change: calculation test
 
 Keep production data out of test fixtures. Do not run fixture-writing scripts against production. After schema changes, generate and review migrations; do not replay SQL blindly on an existing database.
 
-When publishing through Sites, default to the isolated development Site described in `docs/DEVELOPMENT.md`. Push the exact validated source, package its build and deploy the saved version only to that development project. Never commit credentials, `.dev.vars`, outputs/, `.wrangler/` or `.sites-runtime/`.
+Development deployment targets `mirai-staging`; production `mirai.party` already targets `mirai-production`. Use `docs/DEVELOPMENT.md` and the current operations runbook. Inspect live routing, schema and versions before a release rather than assuming dated counts remain current.
 
-- Development deployment is the normal agent feedback loop. It uses the private `Mirai — Development` Site, its separate source repository, development Clerk instance and separate D1 database. A successful development deployment does not promote, merge or deploy anything to `mirai.party`.
-- Do not change `.openai/hosting.json` from its production project ID as part of ordinary development work. If the Sites connector requires a development manifest, create it only in a temporary staging checkout/archive and restore the production manifest before finishing.
-- Production deployment is a separate operator-approved release. Before it, rerun the required checks, review the exact commit and current version/approval implications, then explicitly target the production project and production runtime secrets. Never infer production approval from a successful development deployment.
+- Validate the exact source and build with the matching development/production Clerk publishable key. Production builds use an isolated checkout without local environment files. Deploy only the checked `wrangler.staging.json` or `wrangler.production.json` overlay, never the generated placeholder local config.
+- Never commit credentials, `.dev.vars*`, local `.env` files, outputs/, `.wrangler/` or `.sites-runtime/`. Preserve runtime secrets; do not replace production keys with development values.
+- Production deployment requires explicit operator approval for that release; existing approval for the same action remains valid. Staging success does not itself authorize production. Preserve revision, evidence and current demo approval implications.
+- `.openai/hosting.json` still names the legacy Site. Do not change it or deploy there merely because it exists. Do not copy/remap/reimport legacy sessions, rewrite invitation hostnames or replay DNS cutover as ordinary release work. Sites is not a drop-in rollback database.
+- Current discovery runtime limits are $0.25/session and $1/database lifetime accounting. Unknown usage retains reservations. Never silently raise caps, reset ledgers, switch models or automatically repeat paid calls. These counters do not control other apps' OpenAI spending.
+- After release, record the actual Worker version, source/build provenance, schema changes, observed checks, data impact, runtime caps and remaining manual checks in the operations runbook. Update stale entry-point guidance so subsequent agents use the correct host and workflow.
 
 ## Code review rules
 
 Flag cross-session access, forged owner identity, leaked bearers, approval surviving a new version, unsaved edits being discarded, invented evidence, and unverified integration claims. Keep presentation lint out of security findings.
 
-These agreements capture Mirai's project constraints and the execution approach used so far. They were added on 2026-09-10; they did not exist during the initial build. See docs/AGENT-GUIDANCE.md for sources and optional future files.
+These agreements capture Mirai's project constraints and the execution approach used so far. They were added on 2026-09-10 and updated after the verified 2026-09-11 Cloudflare discovery release; they did not exist during the initial build. See docs/AGENT-GUIDANCE.md for sources and optional future files.

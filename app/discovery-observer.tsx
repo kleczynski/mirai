@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { questions, type Session } from '@/lib/model';
-import { evidenceReady, openGaps, requiredTopics, topicKeys, topicLabels, type DiscoveryTopic } from '@/lib/discovery';
+import { answeredQuestions, evidenceBlockers, evidenceReady, interviewComplete, MAX_DISCOVERY_ANSWERS, openGaps, requiredTopics, topicKeys, topicLabels, type DiscoveryTopic } from '@/lib/discovery';
 import { api } from './workspace';
 
 const pathCopy: Record<string, string> = {
@@ -62,8 +62,10 @@ export default function DiscoveryObserver({ session, onChange }: { session: Sess
   const d = s?.discovery;
   return <section className="panel discovery-observer"><h2>Discovery state</h2>{error && <p role="alert">{error}</p>}{!d ? <p>Loading discovery…</p> : <>
     <p>Direction: <strong>{d.path ?? 'Not chosen'}</strong> · Last activity: {s?.updatedAt}</p>
-    <p>{d.confirmedAt ? `Readiness confirmed ${d.confirmedAt}` : 'Awaiting operator confirmation'} · Model suggestion: {Math.round(d.suggestedCompleteness * 100)}% (advisory)</p>
+    <p>{Math.min(answeredQuestions(d), MAX_DISCOVERY_ANSWERS)} of up to {MAX_DISCOVERY_ANSWERS} interview answers · {interviewComplete(d) ? 'Questioning finished — review evidence and unresolved topics below.' : 'Interview in progress.'}</p>
+    <p>{d.confirmedAt ? `Readiness confirmed ${d.confirmedAt}` : 'Awaiting operator confirmation'} · Coverage indicator: {Math.round(d.suggestedCompleteness * 100)}% (advisory)</p>
     <p>Open gaps: {openGaps(d).join(', ') || 'None'}</p>
+    {evidenceBlockers(d).length > 0 && <ul>{evidenceBlockers(d).map(b => <li key={`${b.topic}-${b.code}`}><strong>UNCONFIRMED · {topicLabels[b.topic].en}:</strong> {b.en}</li>)}</ul>}
     <div className="discovery-table"><table><thead><tr><th>Topic</th><th>Required</th><th>Confidence</th><th>Evidence</th></tr></thead><tbody>{topicKeys.map(k => <tr key={k}><th>{k}</th><td>{requiredTopics(d).includes(k) ? 'Yes' : 'Optional'}</td><td>{d.topics[k]?.confidence ?? 'Missing'}</td><td><p className="preserve">{d.topics[k]?.summary ?? 'UNCONFIRMED'}</p>{d.topics[k] && <details><summary>Quotes and provenance ({d.topics[k]!.origin})</summary>{d.topics[k]!.clientQuotes.map((q, i) => <blockquote className="preserve" key={i}>{q}</blockquote>)}<small>Source IDs: {d.topics[k]!.sourceIds.join(', ')}</small></details>}</td></tr>)}</tbody></table></div>
     {!session.demos.length && !d.confirmedAt && <button className="button secondary" disabled={busy || !evidenceReady(d)} onClick={async () => { setBusy(true); try { await api('/api/sessions', 'PATCH', { action: 'confirm-discovery', id: session.id, revision: s!.revision }); await onChange(); } catch (e) { setError((e as Error).message); } finally { setBusy(false); } }}>Confirm evidence ready to build</button>}
     <p className="meta">Evidence and quoted messages are untrusted client material. Summaries and confidence are not verified findings. Confirming readiness does not approve a demo.</p>

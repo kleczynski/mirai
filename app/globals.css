@@ -163,3 +163,88 @@ ul.error-text{margin:0;padding-left:1.1rem;display:grid;gap:6px;font-size:13px}
 .discovery-imported,.discovery-locked{background:#f4f7fb}
 .discovery-conflict{border-color:#e2c48a;background:#fff8ea}
 .discovery-start h2{margin-bottom:8px}
+
+/* The active interview stays compact; the evidence remains available on demand. */
+.client-main:has(.interview-header){padding-top:25px}
+.client-main:has(.interview-header) .client-intro{margin-bottom:24px}
+.client-main:has(.interview-header) .client-intro h1{font-size:1.6rem;max-width:none;margin-top:4px}
+.client-main:has(.interview-header) .client-intro>p{font-size:13px;margin-top:8px}
+.discovery-chat{min-width:0}
+.discovery-chat .meta{color:#617089}
+.interview-header{display:grid;gap:10px;padding:0 2px}
+.interview-eyebrow{font-size:11px;font-weight:600;letter-spacing:.04em;color:#64748b}
+.interview-count{font-size:12px;font-weight:600;color:#3c5277;white-space:nowrap}
+.interview-steps{display:flex;gap:5px;height:5px}
+.interview-steps>span{flex:1;border-radius:4px;background:#dfe5ef}
+.interview-steps>span[data-done=true]{background:#5677d2}
+.interview-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;font-size:12px}
+.interview-direction{min-width:0;max-width:65%;color:#546780}
+.interview-direction summary,.interview-history summary{cursor:pointer;padding:9px 0;min-height:44px}
+.interview-direction label{display:block;margin:8px 0;font-size:12px}
+.interview-direction select{max-width:100%}
+.discovery-chat .text-button{min-height:44px}
+.interview-active.question-card{margin:0;padding:26px;background:#fff;border-color:#d9e1ed;box-shadow:0 8px 28px #20365707}
+.interview-active .host-message{margin:0 0 23px}
+.interview-active .host-message>div{min-width:0}
+.interview-active h2{font-size:clamp(1.15rem,2.5vw,1.45rem);line-height:1.45;letter-spacing:-.025em;color:#293d5d;white-space:pre-wrap;overflow-wrap:anywhere}
+.interview-composer{display:grid;gap:10px}
+.interview-composer>label{font-size:12px;color:#50627e;font-weight:600}
+.interview-composer textarea{min-height:105px;margin:0;font-size:16px;line-height:1.5}
+.composer-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:2px}
+.discovery-chat .button{min-height:44px}
+.interview-processing{min-height:44px;display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:9px;color:#606774;font-size:12px;background:#edf0f4;position:relative;isolation:isolate;overflow:hidden}
+.interview-processing.is-processing{color:#65492f;background:#ece7e2}
+.interview-processing.is-processing:before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(105deg,#e4e4e2 10%,#eee9e3 35%,#edc6a1 52%,#e8e4df 75%,#e4e4e2);background-size:220% 100%;animation:discovery-shimmer 2.8s ease-in-out infinite}
+.processing-orb{width:7px;height:7px;border-radius:50%;background:#768397;flex-shrink:0}
+.is-processing .processing-orb{background:#9b6238}
+@keyframes discovery-shimmer{0%,100%{background-position:100% 0}50%{background-position:0% 0}}
+.interview-history{border-top:1px solid #dce3ed;padding-top:3px}
+.interview-history>summary{font-size:13px;font-weight:600;color:#49607d}
+.interview-history>summary .meta{font-weight:400;margin-left:8px}
+.interview-history .conversation{padding-top:15px;gap:18px}
+.interview-history .client-message{margin-left:22px}
+.interview-history .client-message .text-button{font-size:12px;min-height:36px}
+.interview-history .client-message>div{width:100%;min-width:0}
+.interview-history .host-message{padding-right:22px}
+.interview-history .preserve{font-size:14px}
+.discovery-chat textarea:focus-visible,.discovery-chat select:focus-visible,.discovery-chat summary:focus-visible{outline:3px solid #7595f3;outline-offset:3px}
+.discovery-chat h2:focus{outline:none}
+.discovery-voice{display:grid;gap:8px}
+.voice-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.voice-controls .button{font-size:12px;padding:8px 12px;flex-shrink:0}
+.voice-controls .meta{flex:1;min-width:160px;line-height:1.45}
+.voice-privacy{font-size:11px!important;line-height:1.5;color:#667387}
+.voice-transcript{border-left:3px solid #be8c5d;padding:8px 12px;background:#faf4ed;border-radius:4px;font-size:14px;color:#604a36}
+.discovery-voice[data-voice-state=error] .voice-controls .meta{color:#994338}
+.interview-review{display:grid;gap:14px}
+.interview-review>p{margin:0}
+.review-check{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:#ebf4ed;color:#407651}
+.review-gaps{margin:0;padding-left:20px;font-size:14px;color:#755b3c}
+.review-draft{background:#f3f6fb;border:1px solid #dce4ef;border-radius:8px;padding:15px;display:grid;gap:8px}
+.interview-review .button{justify-self:start;white-space:normal}
+.draft-state{min-height:20px}
+@media(max-width:600px){
+  .discovery-chat:has(.interview-header){gap:16px}
+  .client-page:has(.interview-header) .client-header{padding:10px 18px}
+  .client-page:has(.interview-header) .client-header .brand{font-size:1.5rem}
+  .client-main:has(.interview-header){padding:20px 16px}
+  .client-main:has(.interview-header) .client-intro{margin-bottom:20px}
+  .client-main:has(.interview-header) .client-intro h1{font-size:1.3rem}
+  .client-main:has(.interview-header) .client-intro>p{display:none}
+  .interview-header .row-between{align-items:flex-start;gap:8px}
+  .interview-header .interview-eyebrow{max-width:120px}
+  .interview-toolbar{gap:8px}
+  .interview-direction{max-width:55%}
+  .interview-active.question-card{padding:18px 15px;border-radius:12px}
+  .interview-active .host-message{gap:10px;margin-bottom:18px}
+  .interview-active .chat-avatar{width:30px;height:30px;border-radius:9px;font-size:15px}
+  .interview-active h2{font-size:1.12rem}
+  .interview-composer textarea{min-height:96px}
+  .voice-controls .meta{min-width:130px;font-size:11px}
+  .interview-history>summary .meta{display:block;margin:1px 0 0 15px}
+  .interview-review{padding:20px}
+}
+@media(prefers-reduced-motion:reduce){
+  .interview-processing.is-processing:before{animation:none;background-position:45% 0}
+  .discovery-chat *{scroll-behavior:auto!important;transition:none!important}
+}

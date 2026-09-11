@@ -13,6 +13,7 @@ const forbiddenVars = [
   "MIRAI_OPENAI_API_KEY",
   "MIRAI_DISCOVERY_MODEL",
   "MIRAI_DISCOVERY_SESSION_CAP_USD",
+  "MIRAI_DISCOVERY_WORKSPACE_CAP_USD",
   "CLERK_SECRET_KEY",
 ];
 
@@ -52,6 +53,7 @@ const config = {
   ...generated,
   name: staging.name,
   topLevelName: staging.name,
+  observability: { enabled: false },
   vars,
   d1_databases: [database],
 };

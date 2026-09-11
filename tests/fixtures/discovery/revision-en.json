@@ -89,7 +89,7 @@
         ],
         "suggestedCompleteness": 0.8,
         "path": null,
-        "assistantMessage": "Who would try the first demo?"
+        "assistantMessage": "What first-use scenario should we test, including the person, device and expected result?"
       }
     },
     {
@@ -109,9 +109,9 @@
             "confidence": "high"
           }
         ],
-        "suggestedCompleteness": 1.0,
+        "suggestedCompleteness": 1,
         "path": null,
-        "assistantMessage": "What would make a first demo feel useful to you?"
+        "assistantMessage": "What observable result would make the first version successful, and how would you check it?"
       }
     }
   ],

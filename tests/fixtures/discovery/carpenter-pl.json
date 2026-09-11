@@ -67,7 +67,7 @@
         ],
         "suggestedCompleteness": 0.38,
         "path": null,
-        "assistantMessage": "Jak często pojawia się to zadanie?"
+        "assistantMessage": "Jak wygląda typowy tydzień tej pracy pod względem liczby przypadków, czasu i skutków?"
       }
     },
     {
@@ -111,7 +111,7 @@
         ],
         "suggestedCompleteness": 0.62,
         "path": null,
-        "assistantMessage": "Co sprawiłoby, że pierwsze demo byłoby dla Ciebie przydatne?"
+        "assistantMessage": "Jaki obserwowalny wynik oznacza sukces pierwszej wersji i jak go sprawdzisz?"
       }
     },
     {
@@ -155,7 +155,7 @@
         ],
         "suggestedCompleteness": 0.88,
         "path": null,
-        "assistantMessage": "Kto wypróbuje pierwsze demo?"
+        "assistantMessage": "Jaki scenariusz pierwszego użycia mamy przetestować, uwzględniając osobę, urządzenie i oczekiwany wynik?"
       }
     },
     {
@@ -175,9 +175,9 @@
             "confidence": "high"
           }
         ],
-        "suggestedCompleteness": 1.0,
+        "suggestedCompleteness": 1,
         "path": null,
-        "assistantMessage": "Co sprawiłoby, że pierwsze demo byłoby dla Ciebie przydatne?"
+        "assistantMessage": "Jaki obserwowalny wynik oznacza sukces pierwszej wersji i jak go sprawdzisz?"
       }
     }
   ]
