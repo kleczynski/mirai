@@ -1,6 +1,6 @@
 'use client';
 
-import { ClerkProvider, SignIn, SignUp } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, useClerk } from '@clerk/react';
 
 export default function MiraiClerkProvider({ children }: { children: React.ReactNode }) {
   return <ClerkProvider appearance={{ variables: { colorPrimary: '#315bdd', borderRadius: '14px' } }}>{children}</ClerkProvider>;
@@ -12,4 +12,18 @@ export function MiraiSignIn() {
 
 export function MiraiSignUp() {
   return <SignUp />;
+}
+
+export function MiraiSignOut({ children }: { children: React.ReactNode }) {
+  const { signOut } = useClerk();
+  return (
+    <button
+      type="button"
+      title="Sign out"
+      onClick={() => void signOut({ redirectUrl: "/" })}
+      style={{ background: "none", border: 0, padding: 4, color: "#6c7a91" }}
+    >
+      {children}
+    </button>
+  );
 }

@@ -19,7 +19,7 @@ The complete loop is: invite → discovery → build context → demo → versio
 
 ## Operator journey
 
-Sign in with ChatGPT using the owner account configured in MIRAI_OWNER_EMAIL. Create a session using a custom, carpenter, PC-Market or dental playbook. Copy the invitation and send it to the client. Links expire after 30 days; generating a new link invalidates the previous one. Revocation is immediate.
+Sign in through Clerk (`/sign-in`) using the owner account configured in MIRAI_OWNER_EMAIL. Create a session using a custom, carpenter, PC-Market or dental playbook. Copy the invitation and send it to the client. Links expire after 30 days; generating a new link invalidates the previous one. Revocation is immediate.
 
 The client answers eight guided discovery questions in Polish or English. Answers are persisted in Sites D1, not browser storage. This is a structured questionnaire, not an LLM chat. It does not require an API key.
 
@@ -31,9 +31,9 @@ Deployment guidance can be exported only after the latest demo is approved. It c
 
 ## Access and operations
 
-The site shell is public; session and document APIs enforce operator identity. A 256-bit random invitation bearer grants access to exactly one client session. Only its SHA-256 hash is stored. The bearer is in the URL fragment and sent in an Authorization header. Do not forward a client link to someone who should not see their session. Operator configuration fails closed when absent. D1 stores all sessions under the stable Sites user ID. Optimistic revision checks reject overlapping writes.
+The site shell is public; session and document APIs enforce operator identity. A 256-bit random invitation bearer grants access to exactly one client session. Only its SHA-256 hash is stored. The bearer is in the URL fragment and sent in an Authorization header. Do not forward a client link to someone who should not see their session. Operator configuration fails closed when absent. D1 stores all sessions under the owner identity (`owner_id`: Clerk user id when Clerk is configured). Optimistic revision checks reject overlapping writes.
 
-Sites provides hosting, the database and ChatGPT sign-in. MIRAI_OWNER_EMAIL must be set as a hosted runtime variable, then deployed. Local preview uses the starter's loopback-only mock identity; .dev.vars holds local-only configuration and is ignored. Production source contains no local authentication bypass.
+Sites still hosts production. Owner sign-in is Clerk; `MIRAI_OWNER_EMAIL` must be set as a hosted runtime variable, then deployed. Local preview uses Clerk when `CLERK_SECRET_KEY` is set, otherwise the starter's loopback-only mock identity for HTTP tests. .dev.vars holds local-only configuration and is ignored. Production source contains no local authentication bypass.
 
 ## Audit inspiration
 

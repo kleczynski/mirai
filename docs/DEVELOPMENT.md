@@ -50,14 +50,19 @@ Clerk instance for the live site.
 npm run build
 ```
 
-5. For a **new, empty local database only**, apply these two migrations in order:
+5. Apply pending local D1 migrations (skips SQL whose tables already exist):
 
 ```sh
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_lucky_silver_sable.sql
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_tiny_pepper_potts.sql
+npm run db:local
 ```
 
-These are direct SQL executions, not an automatically tracked local migration runner. On an existing local database, inspect its schema and apply only missing migrations. Keep `.wrangler/state` between restarts to retain local records. Never add `--remote` to these development commands.
+Optional fictional seed (owner `local_seedy`, expired invitation, no live bearer):
+
+```sh
+npm run db:local -- --seed
+```
+
+The script uses `wrangler d1 execute DB --local` only. It refuses `--remote`. It never reads production data. Keep `.wrangler/state` between restarts to retain local records. Do not run the seed against a hosted database.
 
 6. Start the app:
 
@@ -65,9 +70,7 @@ These are direct SQL executions, not an automatically tracked local migration ru
 npm run dev
 ```
 
-Open http://localhost:5173 and sign in through `/sign-in`. New local sessions
-are independent of production. The old Sites/ChatGPT identity remains a
-compatibility fallback when Clerk is not configured.
+Open http://localhost:5173. Owner UI signs in at `/sign-in` and signs out through Clerk. `MIRAI_OWNER_EMAIL` remains the allowlist (Clerk primary email). When `CLERK_SECRET_KEY` is set, that is the only owner identity. When it is unset, portable preview still accepts the loopback Sites mock so localhost HTTP tests can sign in at `/signin-with-chatgpt`. Do not set `MIRAI_LOOPBACK_OWNER_AUTH` in a hosted runtime.
 
 For a built-Worker preview use `npm start`; it shares local D1 but does not provide the development sign-in mock. It is not the preferred owner-flow development mode.
 
@@ -75,10 +78,11 @@ For a built-Worker preview use `npm start`; it shares local D1 but does not prov
 
 ```sh
 npx tsc --noEmit
+npm run lint
 node tests/demo-engine.mjs
 ```
 
-With the portable development server running at localhost:5173, migrations applied, and local owner configured:
+With the portable development server running at localhost:5173, `npm run db:local` applied, and local owner configured (`MIRAI_OWNER_EMAIL=seedy@sites.test`; Clerk secret unset so the loopback mock is used):
 
 ```sh
 node -e "require('node:fs').mkdirSync('outputs', { recursive: true })"
@@ -90,7 +94,7 @@ The API scripts create fictional local sessions; the import test writes ignored 
 
 Before releasing application changes, run `npm run build`. `npm run lint` runs Oxlint, and `npm run lint:fix` applies its safe fixes. There is no `npm test` script currently. Browser visual QA and microphone testing are separate from the checks above.
 
-For schema changes: edit db/schema.ts, run `npm run db:generate`, review the generated SQL and validate against disposable local data. Sites packages production migrations with the build; local migration application is separate.
+For schema changes: edit db/schema.ts, run `npm run db:generate`, review the generated SQL and validate against disposable local data. Then `npm run db:local` on the preview database. Sites packages production migrations with the build; local migration application is separate. Never replay SQL blindly on a database that already has the objects.
 
 ## Publishing versus editing
 
@@ -133,4 +137,4 @@ Then test invitation isolation, cookie/origin behavior, approvals, saved demos, 
 
 ## Recommended next developer work
 
-First add repeatable local database setup and a fictional seed command, then CI for the existing meaningful checks. Add a release manifest linking demo versions to immutable source/build revisions before introducing autonomous builds. Keep customer products in customer-owned repositories and accounts; retain evidence and delivery history in Mirai.
+Local D1 setup (`npm run db:local`) is in place. Offline discovery-chat CI lands with the separate conversation-update branch. Remaining hosting-migration work is operator-owned: production `owner_id` inventory, development D1 remap if that database still uses Sites ids, and a committed Wrangler config with real staging IDs (not this generated placeholder). Add a release manifest linking demo versions to immutable source/build revisions before introducing autonomous builds. Keep customer products in customer-owned repositories and accounts; retain evidence and delivery history in Mirai.
