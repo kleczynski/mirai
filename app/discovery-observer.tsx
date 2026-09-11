@@ -1,8 +1,53 @@
 'use client';
 import { useEffect, useState } from 'react';
-import type { Session } from '@/lib/model';
-import { evidenceReady, openGaps, requiredTopics, topicKeys } from '@/lib/discovery';
+import { questions, type Session } from '@/lib/model';
+import { evidenceReady, openGaps, requiredTopics, topicKeys, topicLabels, type DiscoveryTopic } from '@/lib/discovery';
 import { api } from './workspace';
+
+const pathCopy: Record<string, string> = {
+  creative: 'Explore a new idea',
+  automation: 'Improve a recurring task',
+  blended: 'Blend both',
+};
+
+export function DiscoveryTab({ session: s }: { session: Session }) {
+  const d = s.discovery;
+  if (d) {
+    const required = requiredTopics(d);
+    const shown = topicKeys.filter(k => k === 'path' || required.includes(k) || d.topics[k]);
+    return <section className="panel answers-panel">
+      <h2>The conversation</h2>
+      <p className="meta">Topics from the client chat{d.path ? ` · ${pathCopy[d.path]}` : ' · direction not chosen yet'}. Transcript is in Discovery state above.</p>
+      {shown.map((k, i) => {
+        const evidence = d.topics[k as DiscoveryTopic];
+        const text = k === 'path' ? (d.path ? pathCopy[d.path] : 'Waiting for a direction.') : (evidence?.summary || 'Waiting for client evidence.');
+        return <article key={k} className="answer-row"><span className="question-number">{i + 1}</span><div>
+          <h3>{topicLabels[k][s.language]}</h3>
+          <p className="preserve">{text}</p>
+          {k !== 'path' && evidence && <p className="meta">{evidence.origin} · {evidence.confidence}{required.includes(k) ? '' : ' · optional'}</p>}
+        </div></article>;
+      })}
+    </section>;
+  }
+  if (s.source) {
+    return <section className="panel answers-panel">
+      <h2>The conversation</h2>
+      <p className="meta">Imported Telegram discovery. Original messages are on the Telegram tab. Discovery is read-only.</p>
+    </section>;
+  }
+  const filled = questions.filter(q => s.answers[q.key]?.trim());
+  if (s.discoveryChatEnabled) {
+    return <section className="panel answers-panel">
+      <h2>The conversation</h2>
+      <p className="meta">This session uses discovery chat. Topics appear after the client starts chat. Any form answers below copy in as earlier answers — the model did not ask them.</p>
+      {filled.length ? filled.map((q, i) => <article key={q.key} className="answer-row"><span className="question-number">{i + 1}</span><div><h3>{q[s.language]}</h3><p className="preserve">{s.answers[q.key]}</p></div></article>) : <p className="meta">Waiting for the client to start chat.</p>}
+    </section>;
+  }
+  return <section className="panel answers-panel">
+    <h2>The conversation</h2>
+    {questions.map((q, i) => <article key={q.key} className="answer-row"><span className="question-number">{i + 1}</span><div><h3>{q[s.language]}</h3><p className="preserve">{s.answers[q.key] || 'Waiting for your client’s answer.'}</p></div></article>)}
+  </section>;
+}
 
 type Usage = { requests: number; accountedMicrousd: number; recent: { status: string; created_at: number; metadata: string }[] };
 export default function DiscoveryObserver({ session, onChange }: { session: Session; onChange: () => Promise<void> }) {

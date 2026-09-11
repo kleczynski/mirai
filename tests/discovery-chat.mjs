@@ -66,7 +66,7 @@ for (const name of ['carpenter-pl', 'creative-en', 'revision-en']) {
   assert.equal(isDiscoveryComplete(edited), false, 'Edit invalidates readiness');
 }
 const fixture = await create(); const { id, token } = fixture; await mutate(token, { action: 'start' });
-let s = await read(token); let d = structuredClone(s.discovery); d.transcript.push({ id: 'latest', role: 'client', text: 'I run fictional workshops.', createdAt: '2026-09-11' });
+let s = await read(token); assert.ok(!openGaps(s.discovery).includes('workflow'), 'Automation topics stay optional until a direction is chosen'); let d = structuredClone(s.discovery); d.transcript.push({ id: 'latest', role: 'client', text: 'I run fictional workshops.', createdAt: '2026-09-11' });
 assert.throws(() => parseModelOutput({ ...output(s), assistantMessage: 'Which tools do you use? ' + hostQuestions.motivation.en }, d, s, 'latest'));
 assert.throws(() => parseModelOutput({ ...output(s), assistantMessage: 'Tell me your budget. ' + hostQuestions.motivation.en }, d, s, 'latest'));
 assert.throws(() => parseModelOutput(output(s, 'workflow'), d, s, 'latest'));

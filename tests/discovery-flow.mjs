@@ -14,7 +14,7 @@ let r = await edit({ action: 'start' }); assert.equal(r.status, 200, r.value.err
 r = await call('/api/sessions/discovery?id=' + a.id, 'GET', undefined, a.token); assert.equal(r.status, 401, 'Client bearer cannot read operator usage');
 r = await call('/api/sessions?id=' + a.id, 'GET', undefined, a.token); assert.equal(r.status, 401);
 r = await call('/api/sessions/discovery?id=' + a.id, 'GET', undefined, undefined, true); assert.equal(r.status, 200); assert.equal(r.value.requests, 0);
-r = await call('/api/sessions?id=' + a.id, 'GET', undefined, undefined, true); assert.equal(r.status, 200); assert.equal(r.value.discovery.transcript.length, 1);
+r = await call('/api/sessions?id=' + a.id, 'GET', undefined, undefined, true); assert.equal(r.status, 200); assert.equal(r.value.discovery.transcript.length, 1); assert.equal(r.value.discoveryChatEnabled, true);
 r = await call('/api/client/discovery-chat', 'POST', { action: 'start', revision: 0, requestId: crypto.randomUUID() }, 'f'.repeat(64)); assert.equal(r.status, 404);
 r = await call('/api/client/discovery-chat', 'POST', { action: 'edit', topic: 'context', text: 'Forbidden target', revision: 0, requestId: crypto.randomUUID(), id: a.id }, b.token); assert.equal(r.status, 400);
 r = await edit({ action: 'path', path: 'creative' }); assert.equal(r.status, 200);

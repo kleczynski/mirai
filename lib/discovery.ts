@@ -17,7 +17,7 @@ export const topicLabels: Record<DiscoveryTopic, { en: string; pl: string }> = {
 };
 export function requiredTopics(d: Discovery): DiscoveryTopic[] {
   const common: DiscoveryTopic[] = ['context', 'pain_or_idea', 'path', 'success_criteria', 'constraints', 'delivery'];
-  return d.path === 'creative' ? common : [...common, 'workflow', 'frequency_impact', 'tools_data'];
+  return d.path === 'automation' || d.path === 'blended' ? [...common, 'workflow', 'frequency_impact', 'tools_data'] : common;
 }
 export function openGaps(d: Discovery) { return requiredTopics(d).filter(k => !d.topics[k]?.summary.trim() || d.topics[k]?.confidence === 'low' || k === 'path' && !d.path); }
 export function evidenceReady(d: Discovery) { return openGaps(d).length === 0; }

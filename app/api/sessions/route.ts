@@ -1,15 +1,17 @@
+import { env } from "cloudflare:workers";
 import { confirmDiscovery, DiscoveryError } from '@/lib/discovery-service';
 import { z } from "zod";
 import { body, database, failure, hash, invitationToken, json, ownedSession, owner, save, unpack, ApiError, type Row } from "@/lib/server";
-import { demoChecks, isDiscoveryComplete, validDemoUrl, type SessionData } from "@/lib/model";
+import { demoChecks, isDiscoveryComplete, validDemoUrl, type Session, type SessionData } from "@/lib/model";
 export const dynamic = "force-dynamic";
+function withChatFlag<T extends Session>(s: T) { return { ...s, discoveryChatEnabled: env.MIRAI_DISCOVERY_ENABLED === "true" }; }
 export async function GET(request: Request) {
   try {
     const id = new URL(request.url).searchParams.get("id");
-    if (id) return json(await ownedSession(id));
+    if (id) return json(withChatFlag(await ownedSession(id)));
     const u = await owner();
     const rows = await database().prepare("SELECT * FROM sessions WHERE owner_id = ? ORDER BY updated_at DESC LIMIT 500").bind(u.userId).all<Row>();
-    return json(rows.results.map(row => { const s = unpack(row); return s.discovery ? { ...s, discovery: { ...s.discovery, transcript: [] } } : s; }));
+    return json(rows.results.map(row => { const s = unpack(row); return withChatFlag(s.discovery ? { ...s, discovery: { ...s.discovery, transcript: [] } } : s); }));
   } catch (e) { return failure(e); }
 }
 const creation = z.object({ title: z.string().trim().min(2).max(100), client: z.string().trim().min(2).max(100), template: z.enum(["custom", "carpenter", "retail", "dental"]), language: z.enum(["en", "pl"]) });
