@@ -1,0 +1,16 @@
+{
+  "name": "mirai-production",
+  "account_id": "61c83af95d6ce17e198b3d60268ef6df",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mirai-production",
+      "database_id": "26c4ce49-e459-4e94-be18-593b3f633c98"
+    }
+  ]
+}

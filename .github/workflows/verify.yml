@@ -50,3 +50,48 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  production-config:
+    name: Production config dry run
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Create isolated source archive
+        run: |
+          mkdir -p "$RUNNER_TEMP/mirai-production-source"
+          git archive --format=tar HEAD |
+            tar -xf - -C "$RUNNER_TEMP/mirai-production-source"
+
+      - name: Install locked dependencies
+        working-directory: ${{ runner.temp }}/mirai-production-source
+        run: npm ci
+
+      - name: Build with a non-secret production-shaped Clerk key
+        working-directory: ${{ runner.temp }}/mirai-production-source
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_live_Y2kuZXhhbXBsZS5jb20k
+        run: npm run build
+
+      - name: Prepare pinned production config
+        working-directory: ${{ runner.temp }}/mirai-production-source
+        run: node scripts/prepare-production-deploy.mjs "$PWD"
+
+      - name: Validate Wrangler production deployment
+        working-directory: ${{ runner.temp }}/mirai-production-source
+        run: >-
+          npx wrangler deploy
+          --dry-run
+          --config dist/server/wrangler.production.json
+          --outdir "${RUNNER_TEMP}/mirai-production-dry-run"
