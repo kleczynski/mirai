@@ -215,3 +215,36 @@ proposal was superseded by separate legacy/new-client databases. See
 [historical investigation](sites-migration-investigation.md), not as an executable
 cutover checklist. This task did not perform or independently reconstruct that
 intervening migration.
+
+## Repository handoff
+
+This session's implementation, tests and operating guidance were pushed to
+`main` at `d80cfbfd999800155f94e7aa866ba731d7c1d827`. The [Verify run](https://github.com/kleczynski/mirai/actions/runs/34638017892)
+passed typecheck, lint, tests, build and production-configuration dry run.
+The JavaScript/TypeScript CodeQL check also passed. Later documentation-only
+commits record these results without changing the deployed application code.
+The unrelated presentation files listed above remain outstanding local work;
+private local outputs and `.cursor/` were not published.
+
+The initial source push was rejected by automatic approval review because public
+repository publication was not explicit. The operator subsequently explicitly
+authorized publishing this session's changes to the existing public
+`kleczynski/mirai` repository. The push then succeeded. This is a record of scope,
+not blanket permission to publish future secrets, client evidence or other tasks.
+
+## Dependency follow-up
+
+GitHub reported pre-existing critical Next.js alerts #48 (Windows-hosted server RCE)
+and #49 (AVIF image-optimizer RCE). The lockfile still pins Next 16.2.6; GitHub lists
+16.3.3 as the first patched version. This release did not change dependencies or
+close those alerts.
+
+Reachability triage found this Worker starts `vinext/server/fetch-handler`, not
+Next's server. Vinext uses its own image handler; the checked config has no
+registered image optimizer or Images binding and falls back to validated
+same-origin image redirects. The inspected bundle did not contain Next's native
+image optimizer or `sharp`. Those findings do not demonstrate these prerequisites
+on the current deployment, but are not an exploit test or a full dependency audit.
+Review and patch the dependency set in a focused follow-up; reassess before adding
+Next-native hosting or image optimization. A passing build/CodeQL run does not
+close dependency advisories.
