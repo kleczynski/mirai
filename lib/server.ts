@@ -1,11 +1,29 @@
 import { env } from "cloudflare:workers";
 import { getChatGPTUser } from "@/app/chatgpt-auth";
+import { cookies } from "next/headers";
+import { createClerkClient, verifyToken } from "@clerk/backend";
 import type { Session, SessionData } from "./model";
 export class ApiError extends Error { constructor(public status: number, message: string) { super(message); } }
 export function database() { if (!env.DB) throw new ApiError(503, "Session storage is unavailable. Please try again shortly."); return env.DB; }
 export async function owner() {
-  const user = await getChatGPTUser();
-  if (!user) throw new ApiError(401, "Sign in with ChatGPT to open your workspace.");
+  let clerkUser: { id: string; emailAddresses: { id: string; emailAddress: string }[]; primaryEmailAddressId: string | null } | null = null;
+  try {
+    const token = (await cookies()).get("__session")?.value;
+    const secretKey = (env as unknown as Record<string, string>).CLERK_SECRET_KEY;
+    if (token && secretKey) {
+      const verified = await verifyToken(token, { secretKey });
+      if (verified.sub) {
+        const client = createClerkClient({ secretKey });
+        const account = await client.users.getUser(verified.sub);
+        clerkUser = { id: account.id, emailAddresses: account.emailAddresses.map((x) => ({ id: x.id, emailAddress: x.emailAddress })), primaryEmailAddressId: account.primaryEmailAddressId };
+      }
+    }
+  } catch { /* Clerk is optional in local legacy previews. */ }
+  const user = clerkUser ? {
+    userId: clerkUser.id,
+    email: clerkUser.emailAddresses.find((x) => x.id === clerkUser.primaryEmailAddressId)?.emailAddress ?? "",
+  } : await getChatGPTUser();
+  if (!user) throw new ApiError(401, "Sign in to open your workspace.");
   const configured = (env as unknown as Record<string, string>).MIRAI_OWNER_EMAIL;
   if (!configured) throw new ApiError(503, "Operator access needs configuration. Set MIRAI_OWNER_EMAIL in the Sites runtime settings.");
   if (user.email.toLowerCase() !== configured.toLowerCase()) throw new ApiError(403, "This workspace is private. Use the session link your host shared with you.");

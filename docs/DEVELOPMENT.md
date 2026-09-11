@@ -37,6 +37,13 @@ npm run install:ci
 MIRAI_OWNER_EMAIL=seedy@sites.test
 ```
 
+When Clerk is configured, also add the development values from the Clerk
+Dashboard to ignored `.env.local`: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and
+`CLERK_SECRET_KEY`. `MIRAI_OWNER_EMAIL` remains the single-user allowlist; the
+server compares it with the verified Clerk primary email. Never commit Clerk
+keys. Configure equivalent values in the hosted runtime, using the production
+Clerk instance for the live site.
+
 4. Build to generate the local Worker/D1 configuration:
 
 ```sh
@@ -58,7 +65,9 @@ These are direct SQL executions, not an automatically tracked local migration ru
 npm run dev
 ```
 
-Open http://localhost:5173, then visit http://localhost:5173/signin-with-chatgpt?return_to=/ to use the loopback-only mock owner. New local sessions are independent of production. Production owner data is not included in the repository. The local mock is excluded from production builds.
+Open http://localhost:5173 and sign in through `/sign-in`. New local sessions
+are independent of production. The old Sites/ChatGPT identity remains a
+compatibility fallback when Clerk is not configured.
 
 For a built-Worker preview use `npm start`; it shares local D1 but does not provide the development sign-in mock. It is not the preferred owner-flow development mode.
 
