@@ -79,7 +79,7 @@ node tests/import-demo-flow.mjs
 
 The API scripts create fictional local sessions; the import test writes ignored local invitation links into outputs/. They do not clean up those records. Their base URL is hard-coded to localhost. Do not change it to production.
 
-Before releasing application changes, run `npm run build`. `npm run lint` is available, but no claim is made that the entire inherited starter is lint-clean. There is no `npm test` script currently. Browser visual QA and microphone testing are separate from the checks above.
+Before releasing application changes, run `npm run build`. `npm run lint` runs Oxlint, and `npm run lint:fix` applies its safe fixes. There is no `npm test` script currently. Browser visual QA and microphone testing are separate from the checks above.
 
 For schema changes: edit db/schema.ts, run `npm run db:generate`, review the generated SQL and validate against disposable local data. Sites packages production migrations with the build; local migration application is separate.
 
