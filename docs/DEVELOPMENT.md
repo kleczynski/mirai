@@ -8,9 +8,9 @@ React 19, TypeScript, Vinext/Vite, Tailwind and shared UI components run on a Cl
 
 | Area | Files |
 | --- | --- |
-| Operator workspace | app/workspace.tsx, app/source-history.tsx |
-| Private client journey | app/s/session.tsx |
-| Sessions, discovery and version transitions | app/api/sessions/, app/api/client/, lib/model.ts |
+| Operator workspace | app/workspace.tsx, app/source-history.tsx, app/discovery-observer.tsx |
+| Private client journey | app/s/session.tsx, app/s/discovery-client.tsx |
+| Sessions, discovery and version transitions | app/api/sessions/, app/api/client/, lib/model.ts, lib/discovery.ts, lib/discovery-service.ts |
 | Authentication and persistence | lib/server.ts, app/chatgpt-auth.ts, db/schema.ts |
 | Evidence documents | lib/documents.ts, app/api/documents/ |
 | Telegram import | app/api/import/route.ts |
@@ -80,6 +80,8 @@ For a built-Worker preview use `npm start`; it shares local D1 but does not prov
 npx tsc --noEmit
 npm run lint
 node tests/demo-engine.mjs
+node --import ./tests/typescript-loader.mjs tests/attach-demo-blockers.mjs
+node --import ./tests/typescript-loader.mjs tests/discovery-chat.mjs
 ```
 
 With the portable development server running at localhost:5173, `npm run db:local` applied, and local owner configured (`MIRAI_OWNER_EMAIL=seedy@sites.test`; Clerk secret unset so the loopback mock is used):
@@ -87,10 +89,25 @@ With the portable development server running at localhost:5173, `npm run db:loca
 ```sh
 node -e "require('node:fs').mkdirSync('outputs', { recursive: true })"
 node tests/session-flow.mjs
+node tests/lifecycle-smoke.mjs
 node tests/import-demo-flow.mjs
 ```
 
-The API scripts create fictional local sessions; the import test writes ignored local invitation links into outputs/. They do not clean up those records. Their base URL is hard-coded to localhost. Do not change it to production.
+With `MIRAI_DISCOVERY_ENABLED=true` in ignored `.dev.vars` (no API key required for this suite):
+
+```sh
+node tests/discovery-flow.mjs
+```
+
+Optional localhost browser smokes, skipped unless Playwright is installed.
+They are not in `verify.yml`.
+
+```sh
+node tests/client-journey-browser.mjs
+node tests/discovery-client-browser.mjs
+```
+
+The API scripts create fictional local sessions; the import test writes ignored local invitation links into outputs/. They do not clean up those records. `tests/session-flow.mjs` and `tests/lifecycle-smoke.mjs` are hard-coded to `http://localhost:5173`. Do not add an origin override that can target production.
 
 Before releasing application changes, run `npm run build`. `npm run lint` runs Oxlint, and `npm run lint:fix` applies its safe fixes. There is no `npm test` script currently. Browser visual QA and microphone testing are separate from the checks above.
 
@@ -100,19 +117,17 @@ For schema changes: edit db/schema.ts, run `npm run db:generate`, review the gen
 
 ### Development environment
 
-The normal agent deployment target is the private development Site:
+Development has left Sites. Do not deploy or test hosted changes on
+`https://mirai-development.wishfishdev.chatgpt.site` or any `*.chatgpt.site` URL.
 
-- URL: https://mirai-development.wishfishdev.chatgpt.site
-- Project: `Mirai — Development`
-- Sites project ID: `appgprj_6aa3b79a2f5c8191a7c1df2fd5dbe084`
-- Clerk: development instance
-- D1: separate development database
+| Env | Host | Notes |
+| --- | --- | --- |
+| Local | `http://localhost:5173` | Clerk if `CLERK_SECRET_KEY` is set; else loopback mock for HTTP tests only |
+| Development / staging | `https://mirai-staging.kleczynski11312.workers.dev` | Operator-owned Worker + D1. Clerk development. Empty of product rows. `0000`+`0001` applied. **No `0002` unless the operator later approves it.** |
+| Live production | `https://mirai.party` (Sites) | Still Sites. Eight old sessions stay there. Do not cut over |
 
-When an agent completes a change, “accepting” or deploying it to development
-means that the validated commit becomes available at that URL. It does not
-merge to `main`, change `mirai.party`, copy data to production, or promote the
-version automatically. Agents should use development to test UI, Clerk login,
-API behavior and fictional fixtures.
+Local preview is the normal agent feedback loop for product work. A successful
+local check does not deploy, merge, or promote anything to `mirai.party`.
 
 ### Operator-owned staging (Phase 2, not production)
 
@@ -133,6 +148,13 @@ The development deployment currently needs its own `NEXT_PUBLIC_CLERK_PUBLISHABL
 
 ### Production release
 
+For the operator-authorized new-client separation run, see
+[production preview status and operator runbook](plans/production-new-clients.md).
+The new `mirai-production` Worker and empty D1 exist, but Clerk browser sign-in
+failed. Sites still serves `mirai.party`; do not cut over or copy the eight old
+sessions. `deploy/production.json` and `scripts/prepare-production-deploy.mjs`
+prepare that separate preview target without changing the Sites manifest.
+
 Production remains `https://mirai.party`. A production release requires an
 explicit operator decision after development testing. The agent must deploy
 the exact reviewed commit and saved version to the production project, then
@@ -149,13 +171,71 @@ Then test invitation isolation, cookie/origin behavior, approvals, saved demos, 
 
 ## Recommended next developer work
 
-Local D1 setup (`npm run db:local`) is in place. Staging Worker
+Local D1 setup (`npm run db:local`) applies `0002` when `discovery_requests` is
+absent and skips it when the table exists. Staging Worker
 `https://mirai-staging.kleczynski11312.workers.dev` is deployed against D1
 `7fece159-c3e2-4394-953d-60679fb92b33` with development Clerk secrets.
-Offline discovery-chat CI lands with the separate conversation-update branch.
-Remaining operator-owned work: Clerk allowed origin for that workers.dev URL,
-production `owner_id` inventory, development D1 remap if that database still
-uses Sites ids, and Sites D1 export access before any production copy. Add a
-release manifest linking demo versions to immutable source/build revisions
-before introducing autonomous builds. Keep customer products in customer-owned
-repositories and accounts; retain evidence and delivery history in Mirai.
+Discovery chat is implemented locally and covered in CI offline; it is not
+enabled on staging or `mirai.party`. Remaining operator-owned work: whether to
+enable chat after local gates; whether to apply `0002` on staging or the empty
+new-client D1 in a later approved release; Clerk allowed origin for the
+workers.dev URL; production `owner_id` inventory; and Sites D1 export access
+before any production copy. Add a release manifest linking demo versions to
+immutable source/build revisions before introducing autonomous builds. Keep
+customer products in customer-owned repositories and accounts; retain evidence
+and delivery history in Mirai.
+
+## Discovery chat development
+
+Chat is an opt-in rollout alongside the form. In ignored `.dev.vars`, add
+`MIRAI_DISCOVERY_ENABLED=true`. The topic form and local tests work without an
+API key. For live interviewing, configure `MIRAI_OPENAI_API_KEY` as a
+server-only secret. Do not paste keys into source, client code, tracked files
+or tool output. Do not put `MIRAI_DISCOVERY_*` or `MIRAI_OPENAI_API_KEY` on
+staging or production unless the operator explicitly asks after local gates.
+
+Optional values: `MIRAI_DISCOVERY_MODEL=gpt-5.6-terra` (the only approved
+model), `MIRAI_DISCOVERY_SESSION_CAP_USD=1` (can lower, not raise, the $1 cap).
+There is no automatic fallback model. See
+[design and limits](plans/discovery-chat.md).
+
+`npm run db:local` applies `drizzle/0002_polite_bucky.sql` on a new empty local
+database and skips it when `discovery_requests` already exists. It refuses
+`--remote`.
+
+Owner authentication stays Clerk-only when `CLERK_SECRET_KEY` is set. The
+`/signin-with-chatgpt` loopback mock is for localhost HTTP tests when that
+secret is unset. Hosted Workers must not treat `oai-authenticated-user-*` as
+identity. Chat remains undeployed on `mirai.party`.
+
+## Pre-client lifecycle: automated vs still human
+
+The operator’s live gate before a real client on `https://mirai.party` is now
+partly automated. None of these default scripts target production or staging.
+
+| Operator check | Automated? | Where |
+| --- | --- | --- |
+| Anonymous `/api/sessions` is 401 | Yes | `tests/session-flow.mjs`, `tests/lifecycle-smoke.mjs` |
+| Create session returns one invite token | Yes | same; tokens are not printed by the lifecycle smoke beyond the existing session-flow return value used in-process |
+| Client bearer sees the session, not an owner list | Yes | `tests/lifecycle-smoke.mjs` |
+| Invite rotation: old 404, new 200 | Yes | both HTTP suites |
+| Revoke → 404 | Yes | both HTTP suites |
+| Eight fictional answers → Ready to build | Yes | both HTTP suites |
+| Incomplete attach stays 400 / same stage | Yes | `tests/lifecycle-smoke.mjs`; unit cases in `tests/attach-demo-blockers.mjs` |
+| Attach `https://example.com/test-try` → Demo review, not bundled | Yes | `tests/lifecycle-smoke.mjs` |
+| Note + approval on current demo; second attach clears approval; stale demoId is 409 | Yes | both HTTP suites |
+| `/test-try` on the local origin is 404 | Yes | `tests/client-journey-browser.mjs` (Playwright) |
+| Signed-out `/s#token` is the client page, not the workspace | Yes | Playwright smoke |
+| Share this version disabled + blocker list until URL/summary/checks pass | Yes | Playwright smoke + `attachDemoBlockers` unit test |
+| Clerk sign-in on `mirai.party` | Still human | production Clerk cookie |
+| Empty-list visual on a fresh production workspace | Still human | visual only |
+| Private-window cookie isolation | Still human | browser cookie jars |
+| Copying a live invite without leaking the token | Still human | operator clipboard |
+
+An optional operator-only script, `node scripts/live-smoke.mjs`, refuses to run
+unless `MIRAI_LIVE_SMOKE=I_UNDERSTAND` **and** an explicit
+`MIRAI_LIVE_SMOKE_ORIGIN`. It defaults to refusing a missing origin even though
+localhost is the documented default. If the origin is `https://mirai.party`,
+it also requires `MIRAI_LIVE_SMOKE_PRODUCTION=I_REALLY_MEAN_MIRAI_PARTY`. It
+never prints invitation tokens (logs only “token received”). It is not in
+`verify.yml`. Do not point it at staging unless the operator asks.

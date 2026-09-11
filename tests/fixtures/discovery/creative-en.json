@@ -1,0 +1,118 @@
+{
+  "fictional": true,
+  "language": "en",
+  "template": "custom",
+  "path": "creative",
+  "turns": [
+    {
+      "client": "I run fictional community drawing workshops.",
+      "response": {
+        "questionId": "motivation",
+        "topicUpdates": [
+          {
+            "topic": "context",
+            "summary": "Runs fictional community drawing workshops.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "I run fictional community drawing workshops."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.2,
+        "path": null,
+        "assistantMessage": "What made you want to explore a change?"
+      }
+    },
+    {
+      "client": "I want to explore a playful shared sketchbook for our community.",
+      "response": {
+        "questionId": "idea",
+        "topicUpdates": [
+          {
+            "topic": "pain_or_idea",
+            "summary": "Explore a playful community sketchbook.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "I want to explore a playful shared sketchbook for our community."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.4,
+        "path": null,
+        "assistantMessage": "What would you love to create?"
+      }
+    },
+    {
+      "client": "A first demo is useful if two friends can add drawings to a shared page.",
+      "response": {
+        "questionId": "constraints",
+        "topicUpdates": [
+          {
+            "topic": "success_criteria",
+            "summary": "Two friends can add drawings to a shared page.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "A first demo is useful if two friends can add drawings to a shared page."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.6,
+        "path": null,
+        "assistantMessage": "What boundary should we respect while exploring this?"
+      }
+    },
+    {
+      "client": "Use fictional profiles and keep every sketch private to the invited group.",
+      "response": {
+        "questionId": "delivery",
+        "topicUpdates": [
+          {
+            "topic": "constraints",
+            "summary": "Fictional profiles; sketches private to the invited group.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Use fictional profiles and keep every sketch private to the invited group."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.8,
+        "path": null,
+        "assistantMessage": "Who would try the first demo?"
+      }
+    },
+    {
+      "client": "Two volunteer friends will try it on their phones.",
+      "response": {
+        "questionId": "success",
+        "topicUpdates": [
+          {
+            "topic": "delivery",
+            "summary": "Two volunteer friends on phones.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Two volunteer friends will try it on their phones."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 1.0,
+        "path": null,
+        "assistantMessage": "What would make a first demo feel useful to you?"
+      }
+    }
+  ]
+}

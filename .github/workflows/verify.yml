@@ -42,5 +42,11 @@ jobs:
       - name: Test demo engine
         run: node tests/demo-engine.mjs
 
+      - name: Test attach-demo blockers
+        run: node --import ./tests/typescript-loader.mjs tests/attach-demo-blockers.mjs
+
+      - name: Test discovery chat (offline)
+        run: node --import ./tests/typescript-loader.mjs tests/discovery-chat.mjs
+
       - name: Build
         run: npm run build

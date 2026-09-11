@@ -1,0 +1,122 @@
+{
+  "fictional": true,
+  "language": "en",
+  "template": "custom",
+  "path": "creative",
+  "turns": [
+    {
+      "client": "I facilitate fictional neighbourhood storytelling sessions.",
+      "response": {
+        "questionId": "motivation",
+        "topicUpdates": [
+          {
+            "topic": "context",
+            "summary": "Facilitates fictional neighbourhood storytelling sessions.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "I facilitate fictional neighbourhood storytelling sessions."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.2,
+        "path": null,
+        "assistantMessage": "What made you want to explore a change?"
+      }
+    },
+    {
+      "client": "I would love to create a collaborative story wall.",
+      "response": {
+        "questionId": "idea",
+        "topicUpdates": [
+          {
+            "topic": "pain_or_idea",
+            "summary": "Create a collaborative story wall.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "I would love to create a collaborative story wall."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.4,
+        "path": null,
+        "assistantMessage": "What would you love to create?"
+      }
+    },
+    {
+      "client": "It should help three people build one short story together.",
+      "response": {
+        "questionId": "constraints",
+        "topicUpdates": [
+          {
+            "topic": "success_criteria",
+            "summary": "Three people build one short story together.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "It should help three people build one short story together."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.6,
+        "path": null,
+        "assistantMessage": "What boundary should we respect while exploring this?"
+      }
+    },
+    {
+      "client": "Only fictional stories, and nothing should be published automatically.",
+      "response": {
+        "questionId": "delivery",
+        "topicUpdates": [
+          {
+            "topic": "constraints",
+            "summary": "Fictional stories; no automatic publication.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Only fictional stories, and nothing should be published automatically."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.8,
+        "path": null,
+        "assistantMessage": "Who would try the first demo?"
+      }
+    },
+    {
+      "client": "Three friends will use a tablet together.",
+      "response": {
+        "questionId": "success",
+        "topicUpdates": [
+          {
+            "topic": "delivery",
+            "summary": "Three friends on a shared tablet.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Three friends will use a tablet together."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 1.0,
+        "path": null,
+        "assistantMessage": "What would make a first demo feel useful to you?"
+      }
+    }
+  ],
+  "correctionAfterTurn5": {
+    "topic": "pain_or_idea",
+    "text": "I now want an audio story garden with typed captions, starting with a silent clickable prototype."
+  }
+}

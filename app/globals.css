@@ -145,3 +145,21 @@ body{font-family:var(--font-sans);font-size:16px;line-height:1.55;background:var
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .import-summary{display:flex;align-items:center;gap:16px;padding:22px;background:#edf4fd;border:1px solid #d7e5f8;border-radius:12px;margin:0 0 18px;color:#5178af}.import-summary>div{flex:1}.import-summary strong{font-size:15px;color:#365c8d}.import-summary p{font-size:12px;margin-top:5px}.journey-strip{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid #e0e7f3;border-radius:10px;background:white;margin-bottom:24px}.journey-strip>div{padding:17px 15px;border-right:1px solid #e8edf5;display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:#6886b0}.journey-strip>div:last-child{border:0}.journey-strip strong{font-size:12px;font-weight:500;color:#4a6489}.journey-strip small{flex-basis:100%;font-size:11px;color:#8a99af}.telegram-record{margin-top:15px}.telegram-messages{display:grid;gap:17px;margin:24px 0}.telegram-messages article{padding:18px 22px;border-radius:12px;max-width:85%}.telegram-messages small{font-size:11px;font-weight:600;display:block;margin-bottom:7px;color:#7890af}.telegram-messages p{font-size:15px}.telegram-bot{background:#f3f6fb;justify-self:start}.telegram-user{background:#eaf2ff;justify-self:end}.source-notes{display:grid;grid-template-columns:1fr 1fr;gap:28px;border-top:1px solid #e3eaf5;margin:26px 0;padding-top:22px}.source-notes h3{display:flex;gap:8px;align-items:center;font-size:14px}.source-notes ul{padding-left:19px;margin:13px 0;color:#6a7e9a;font-size:13px;display:grid;gap:10px}@media(max-width:1000px){.journey-strip{grid-template-columns:1fr 1fr}.journey-strip>div{border-bottom:1px solid #e8edf5}.import-summary{flex-wrap:wrap}.source-notes{grid-template-columns:1fr}.telegram-messages article{max-width:96%}}
 ul.error-text{margin:0;padding-left:1.1rem;display:grid;gap:6px;font-size:13px}
+
+.discovery-chat{display:grid;gap:24px}
+.discovery-chat .conversation{display:grid;gap:16px}
+.discovery-chat textarea{width:100%;margin:12px 0}
+.discovery-chat select{display:block;max-width:100%;margin-top:12px}
+.discovery-chat .answer-row{min-width:0}
+.discovery-chat .preserve,.discovery-observer .preserve{overflow-wrap:anywhere}
+.discovery-observer{margin:24px 0}
+.discovery-table{overflow-x:auto;margin:16px 0}
+.discovery-table table{width:100%;border-collapse:collapse;text-align:left}
+.discovery-table th,.discovery-table td{padding:12px;border-bottom:1px solid #ddd;vertical-align:top}
+.discovery-metadata{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+.discovery-observer details{margin:16px 0}
+.discovery-observer summary{cursor:pointer}
+.discovery-state{display:grid;gap:12px}
+.discovery-imported,.discovery-locked{background:#f4f7fb}
+.discovery-conflict{border-color:#e2c48a;background:#fff8ea}
+.discovery-start h2{margin-bottom:8px}

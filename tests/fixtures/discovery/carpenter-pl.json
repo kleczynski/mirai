@@ -1,0 +1,184 @@
+{
+  "fictional": true,
+  "language": "pl",
+  "template": "carpenter",
+  "path": "automation",
+  "turns": [
+    {
+      "client": "Robię fikcyjne projekty szaf w małym warsztacie.",
+      "response": {
+        "questionId": "motivation",
+        "topicUpdates": [
+          {
+            "topic": "context",
+            "summary": "Robię fikcyjne projekty szaf w małym warsztacie.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Robię fikcyjne projekty szaf w małym warsztacie."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.12,
+        "path": null,
+        "assistantMessage": "Co skłoniło Cię do szukania zmiany?"
+      }
+    },
+    {
+      "client": "Chcę usprawnić powtarzalne planowanie rozkroju płyt.",
+      "response": {
+        "questionId": "task",
+        "topicUpdates": [
+          {
+            "topic": "pain_or_idea",
+            "summary": "Chcę usprawnić powtarzalne planowanie rozkroju płyt.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Chcę usprawnić powtarzalne planowanie rozkroju płyt."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.25,
+        "path": null,
+        "assistantMessage": "Którą powtarzalną czynność najbardziej chcesz usprawnić?"
+      }
+    },
+    {
+      "client": "Zaczynam od listy wymiarów, układam części na płycie i sprawdzam plan przed cięciem.",
+      "response": {
+        "questionId": "frequency",
+        "topicUpdates": [
+          {
+            "topic": "workflow",
+            "summary": "Lista wymiarów, układanie części, sprawdzenie planu.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Zaczynam od listy wymiarów, układam części na płycie i sprawdzam plan przed cięciem."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.38,
+        "path": null,
+        "assistantMessage": "Jak często pojawia się to zadanie?"
+      }
+    },
+    {
+      "client": "Trzy razy w tygodniu zajmuje mi to godzinę. Pomyłki oznaczają odpady.",
+      "response": {
+        "questionId": "tools",
+        "topicUpdates": [
+          {
+            "topic": "frequency_impact",
+            "summary": "Trzy razy tygodniowo, godzina pracy; pomyłki powodują odpady.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Trzy razy w tygodniu zajmuje mi to godzinę. Pomyłki oznaczają odpady."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.5,
+        "path": null,
+        "assistantMessage": "Z jakiego narzędzia korzystasz dziś przy tym zadaniu?"
+      }
+    },
+    {
+      "client": "Używam arkusza z fikcyjnymi wymiarami płyt i części.",
+      "response": {
+        "questionId": "success",
+        "topicUpdates": [
+          {
+            "topic": "tools_data",
+            "summary": "Arkusz z fikcyjnymi wymiarami płyt i części.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Używam arkusza z fikcyjnymi wymiarami płyt i części."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.62,
+        "path": null,
+        "assistantMessage": "Co sprawiłoby, że pierwsze demo byłoby dla Ciebie przydatne?"
+      }
+    },
+    {
+      "client": "Demo ma pokazać poprawny układ jednego fikcyjnego zamówienia do mojego sprawdzenia.",
+      "response": {
+        "questionId": "constraints",
+        "topicUpdates": [
+          {
+            "topic": "success_criteria",
+            "summary": "Poprawny układ jednego fikcyjnego zamówienia do sprawdzenia przez stolarza.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Demo ma pokazać poprawny układ jednego fikcyjnego zamówienia do mojego sprawdzenia."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.75,
+        "path": null,
+        "assistantMessage": "Jakiej granicy powinniśmy przestrzegać, pracując nad tym pomysłem?"
+      }
+    },
+    {
+      "client": "Plan zawsze sprawdzam sam, a demo nie steruje maszyną.",
+      "response": {
+        "questionId": "delivery",
+        "topicUpdates": [
+          {
+            "topic": "constraints",
+            "summary": "Weryfikacja przez stolarza; brak sterowania maszyną.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Plan zawsze sprawdzam sam, a demo nie steruje maszyną."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 0.88,
+        "path": null,
+        "assistantMessage": "Kto wypróbuje pierwsze demo?"
+      }
+    },
+    {
+      "client": "Ja sprawdzę demo na laptopie w warsztacie.",
+      "response": {
+        "questionId": "success",
+        "topicUpdates": [
+          {
+            "topic": "delivery",
+            "summary": "Stolarz sprawdzi demo na laptopie w warsztacie.",
+            "quotes": [
+              {
+                "messageId": "$latest",
+                "text": "Ja sprawdzę demo na laptopie w warsztacie."
+              }
+            ],
+            "confidence": "high"
+          }
+        ],
+        "suggestedCompleteness": 1.0,
+        "path": null,
+        "assistantMessage": "Co sprawiłoby, że pierwsze demo byłoby dla Ciebie przydatne?"
+      }
+    }
+  ]
+}

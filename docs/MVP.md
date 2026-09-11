@@ -1,6 +1,6 @@
 # Mirai MVP
 
-Mirai is the operator's control plane. The three Telegram examples have working demos bundled into this app; new customer demos can also be built separately and linked to a session. This document describes the implemented MVP as of 2026-09-10, not the future roadmap.
+Mirai is the operator's control plane. The three Telegram examples have working demos bundled into this app; new customer demos can also be built separately and linked to a session. This document describes the checkout as of 2026-09-11. Opt-in discovery chat is implemented locally and is not enabled on `mirai.party`.
 
 ## At a glance
 
@@ -13,7 +13,7 @@ The complete loop is: invite → discovery → build context → demo → versio
 | Person | Current actions |
 | --- | --- |
 | Operator | Create sessions, share/revoke links, review evidence, export briefs, attach demo versions, read feedback and export an approved handoff |
-| New client | Open their private link, answer guided questions, later try the demo and leave notes or a decision |
+| New client | Open their private link, use the guided form or opt-in chat, later try the demo and leave notes or a decision |
 | Existing Telegram friend | Open their private link and try the already-linked demo, then submit notes, request changes or approve |
 | Developer | Work from the exported brief, validate a build, return its URL/version to Mirai |
 
@@ -21,9 +21,9 @@ The complete loop is: invite → discovery → build context → demo → versio
 
 Sign in through Clerk (`/sign-in`) using the owner account configured in MIRAI_OWNER_EMAIL. Create a session using a custom, carpenter, PC-Market or dental playbook. Copy the invitation and send it to the client. Links expire after 30 days; generating a new link invalidates the previous one. Revocation is immediate.
 
-The client answers eight guided discovery questions in Polish or English. Answers are persisted in Sites D1, not browser storage. This is a structured questionnaire, not an LLM chat. It does not require an API key.
+By default the client uses the existing eight-question form in Polish or English. Answers persist in D1, not browser storage. The form does not require an API key. An opt-in discovery chat (`MIRAI_DISCOVERY_ENABLED=true`) can start a Terra interview beside that form: existing answers copy in with legacy provenance, drafts stay in memory, and a 409 keeps the draft until the client refreshes, compares, and retries. Chat sessions still need topic coverage and operator confirmation before Ready to build. The public `mirai.party` deployment still uses the form only.
 
-Once all questions have answers, download the Markdown Codex build brief. Give it to Codex with Sites enabled to build a separate demo. The brief includes the actual discovery evidence, constraints, acceptance guidance and previous version feedback. The opportunity proposal is template-based and must be validated against the evidence.
+Once discovery is complete, download the Markdown Codex build brief. Give it to Codex with Sites enabled to build a separate demo. The brief includes the actual discovery evidence, constraints, acceptance guidance and previous version feedback. The opportunity proposal is template-based and must be validated against the evidence.
 
 After testing, attach the HTTPS demo URL, explain what to try and confirm the first-use checklist. These confirmations are operator attestations, not automated test results. The client returns through the same invitation, opens the demo and leaves notes, requests changes or approves the current version. Notes are tied to a session and demo ID. New demo versions reset approval. Discovery becomes read-only after the first demo; subsequent scope changes belong in feedback.
 
@@ -41,13 +41,13 @@ Only three audit files were read from prompt-library: brief-stolarz-meblowy-4819
 
 ## Validation
 
-The local API lifecycle test checks authentication, invitation isolation, discovery save/reload, document gating, unsafe demo URL rejection, discovery locking, version-specific approval, new-version reset, stale-version feedback rejection, invitation replacement and revocation. It uses fictional data in the local database. Run against the portable dev preview with local migrations applied and the local owner configured.
+The local API lifecycle test checks authentication, invitation isolation, discovery save/reload, document gating, unsafe demo URL rejection, discovery locking, version-specific approval, new-version reset, stale-version feedback rejection, invitation replacement and revocation. `tests/lifecycle-smoke.mjs` repeats those API-visible pre-client steps in order, including incomplete attach rejection and a non-bundled `https://example.com/test-try` attach. `tests/attach-demo-blockers.mjs` covers the Share this version blockers without a network. Run against the portable dev preview with local migrations applied and the local owner configured. Clerk sign-in, empty-list visuals, private-window isolation and live invite copy remain short operator checks on `mirai.party`.
 
 The optional browser WebMCP surface lists sessions and opens the creation form. Unsupported browsers keep the ordinary interface. Browser WebMCP contract validation is recorded separately during delivery; build success is not proof of browser interaction coverage.
 
 ## Current limits
 
-No autonomous Codex job dispatch, LLM interviewing, email notifications, attachments or billing. The operator transfers briefs to Codex and demo URLs back to Mirai. Friends use possession-based invitation access, with no separate identity verification. The list shows up to 500 most recently updated sessions. Feedback is capped at 1,000 entries per session. This MVP is intended for small, fictional or approved demo data; retention and customer compliance requirements must be specified before production client use.
+No autonomous Codex job dispatch, email notifications, attachments or customer billing. Opt-in LLM interviewing is implemented locally but has not been tested with a live API key or enabled on `mirai.party`. It uses a reviewed bilingual question library with model-selected follow-ups and short reflections, rather than unrestricted generated questions. The operator transfers briefs to Codex and demo URLs back to Mirai. Friends use possession-based invitation access, with no separate identity verification. The list shows up to 500 most recently updated sessions. Feedback is capped at 1,000 entries per session. This MVP is intended for small, fictional or approved demo data; retention and customer compliance requirements must be specified before production client use.
 
 There is no live Telegram bot sync: the three source conversations were imported once through a private JSON upload. There is no outcome measurement or two-week pilot tracking yet. Current demo approval is a version-scoped acknowledgement, not evidence of measured business benefit.
 
@@ -74,3 +74,27 @@ On 2026-09-10, with explicit owner approval, the root A record pointing to 92.5.
 Existing private links on the Sites address continue to work. The same /s#token path can be shared on mirai.party; keep the token private. New invitation links use the origin from which the operator is using the workspace. No www alias was added.
 
 Rollback, if required: restore the previous root A record 92.5.122.200 with proxy enabled and remove the two new root A records, after confirming the old service is still available. This is an operations note, not authorization to roll back automatically.
+
+## Discovery chat rollout (local implementation)
+
+Enable locally with `MIRAI_DISCOVERY_ENABLED=true` and configure the
+server-only `MIRAI_OPENAI_API_KEY` for paid messages. The approved model is
+`gpt-5.6-terra`, low reasoning, no automatic model fallback, with an
+application-enforced $1/session cap and 40 provider attempts. Clients can use
+topic entry and corrections without paid calls. Chat is not enabled on
+`mirai.party`, staging, or the new-client production preview.
+
+Creative readiness requires context, idea, path, success criteria, constraints
+and delivery; automation/blended also require workflow, frequency/impact and
+tools/data. Model completeness is advisory. The operator reviews coverage and
+confirms readiness. First-demo attachment still locks discovery. Imported
+Telegram conversations remain historical/read-only.
+
+The owner sees topic coverage, confidence, open gaps, an expandable transcript
+and model-call metadata/accounting. Transcript bodies are omitted from the
+session list API. Client bearers cannot access owner discovery endpoints.
+
+Owner sign-in stays Clerk-only on hosted Workers. The loopback
+`/signin-with-chatgpt` mock is for localhost HTTP tests when
+`CLERK_SECRET_KEY` is unset. See [design and known limits](plans/discovery-chat.md)
+and [local setup and tests](DEVELOPMENT.md#discovery-chat-development).
