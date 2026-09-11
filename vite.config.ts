@@ -16,6 +16,8 @@ const managedLinux = readExecutionProfile() === "managed-linux";
 const localBindingConfig = {
   main: "vinext/server/fetch-handler",
   compatibility_flags: ["nodejs_compat"],
+  // Loopback-only owner mock. Never set this on a hosted Worker or Sites runtime.
+  vars: { MIRAI_LOOPBACK_OWNER_AUTH: "1" },
   d1_databases: d1
     ? [
         {

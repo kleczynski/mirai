@@ -1,3 +1,4 @@
+import { env } from "cloudflare:workers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -17,11 +18,38 @@ const PERCENT_ENCODED_UTF8 = "percent-encoded-utf-8";
 const SIGN_IN_PATH = "/signin-with-chatgpt";
 const SIGN_OUT_PATH = "/signout-with-chatgpt";
 const CALLBACK_PATH = "/callback";
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
+function loopbackHost(requestHeaders: Headers): boolean {
+  const host = (requestHeaders.get("host") ?? "")
+    .split(":")[0]
+    .replace(/^\[|\]$/g, "")
+    .toLowerCase();
+  return LOOPBACK_HOSTS.has(host);
+}
+
+export function sitesLoopbackMockEnabled(): boolean {
+  return env.MIRAI_LOOPBACK_OWNER_AUTH === "1";
+}
+
+function viteDev(): boolean {
+  return Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV);
+}
+
+function trustSitesIdentityHeaders(requestHeaders: Headers): boolean {
+  if (!loopbackHost(requestHeaders)) return false;
+  return sitesLoopbackMockEnabled() || viteDev();
+}
 
 export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const requestHeaders = await headers();
   const userId = requestHeaders.get(USER_ID_HEADER);
   const email = requestHeaders.get(USER_EMAIL_HEADER);
+  if (!trustSitesIdentityHeaders(requestHeaders)) {
+    // Hosted Workers (including Sites) may still receive these headers. They
+    // are not owner identity unless the portable loopback mock injected them.
+    return null;
+  }
   if (!userId || !email) return null;
 
   const encodedFullName = requestHeaders.get(USER_FULL_NAME_HEADER);
@@ -45,7 +73,7 @@ export async function requireChatGPTUser(
   const user = await getChatGPTUser();
   if (user) return user;
 
-  redirect(chatGPTSignInPath(returnTo));
+  redirect(`/sign-in?redirect_url=${encodeURIComponent(safeRelativeReturnPath(returnTo))}`);
 }
 
 export function chatGPTSignInPath(returnTo: string): string {

@@ -1,11 +1,11 @@
 'use client';
-import { SignUp } from "@clerk/react";
 import "../../auth.css";
+import { MiraiSignUp } from "../../clerk-provider";
 
 export default function SignUpPage() {
   return (
     <div className="auth-shell auth-shell-simple">
-      <SignUp />
+      <MiraiSignUp />
     </div>
   );
 }
