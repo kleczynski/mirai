@@ -100,6 +100,7 @@ The normal agent deployment target is the private development Site:
 
 - URL: https://mirai-development.wishfishdev.chatgpt.site
 - Project: `Mirai — Development`
+- Sites project ID: `appgprj_6aa3b79a2f5c8191a7c1df2fd5dbe084`
 - Clerk: development instance
 - D1: separate development database
 
