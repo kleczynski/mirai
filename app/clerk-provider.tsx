@@ -3,7 +3,14 @@
 import { ClerkProvider, SignIn, SignUp, useClerk } from '@clerk/react';
 
 export default function MiraiClerkProvider({ children }: { children: React.ReactNode }) {
-  return <ClerkProvider appearance={{ variables: { colorPrimary: '#315bdd', borderRadius: '14px' } }}>{children}</ClerkProvider>;
+  return (
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      appearance={{ variables: { colorPrimary: '#315bdd', borderRadius: '14px' } }}
+    >
+      {children}
+    </ClerkProvider>
+  );
 }
 
 export function MiraiSignIn() {

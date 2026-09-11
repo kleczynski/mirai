@@ -116,8 +116,8 @@ API behavior and fictional fixtures.
 
 ### Operator-owned staging (Phase 2, not production)
 
-An empty D1 `mirai-staging` (`360d76c0-0fec-42aa-9b6f-b0f240baaaae`) exists in
-the operator Cloudflare account. Migrations `0000` and `0001` are applied;
+An empty D1 `mirai-staging` (`7fece159-c3e2-4394-953d-60679fb92b33`) exists in
+the operator Cloudflare account Wrangler uses. Migrations `0000` and `0001` are applied;
 `0002` and production/Sites rows are not. Bindings are in `deploy/staging.json`.
 `npm run build` then `npm run deploy:staging:prepare` writes
 `dist/server/wrangler.staging.json` from the Vinext output, replacing the
@@ -149,13 +149,13 @@ Then test invitation isolation, cookie/origin behavior, approvals, saved demos, 
 
 ## Recommended next developer work
 
-Local D1 setup (`npm run db:local`) is in place. Staging D1 and a prepare-only
-Wrangler overlay exist; the Worker is not deployed until development Clerk
-secrets are set. Offline discovery-chat CI lands with the separate
-conversation-update branch. Remaining operator-owned work: production
-`owner_id` inventory, development D1 remap if that database still uses Sites
-ids, first `wrangler` deploy of `mirai-staging` to `workers.dev`, and Sites D1
-export access before any production copy. Add a release manifest linking demo
-versions to immutable source/build revisions before introducing autonomous
-builds. Keep customer products in customer-owned repositories and accounts;
-retain evidence and delivery history in Mirai.
+Local D1 setup (`npm run db:local`) is in place. Staging Worker
+`https://mirai-staging.kleczynski11312.workers.dev` is deployed against D1
+`7fece159-c3e2-4394-953d-60679fb92b33` with development Clerk secrets.
+Offline discovery-chat CI lands with the separate conversation-update branch.
+Remaining operator-owned work: Clerk allowed origin for that workers.dev URL,
+production `owner_id` inventory, development D1 remap if that database still
+uses Sites ids, and Sites D1 export access before any production copy. Add a
+release manifest linking demo versions to immutable source/build revisions
+before introducing autonomous builds. Keep customer products in customer-owned
+repositories and accounts; retain evidence and delivery history in Mirai.
