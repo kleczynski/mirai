@@ -374,6 +374,14 @@ Prerequisites: operator Cloudflare account; zone access for a staging hostname *
 
 Go: staging homepage, Clerk sign-in, anonymous `/api/sessions` = 401, fictional invitation isolation, revision 409, approval reset on new demo version.
 
+Operator walkthrough notes (2026-09-11, empty staging D1):
+
+- Clerk sign-in on the workers.dev origin shows a blank workspace. That is expected; do not copy production rows.
+- Playbook **+ New session** does not attach bundled `/demo/{id}` UIs. Those rows exist only after Telegram import (`bundled: true`).
+- **Share this version** stays disabled until all four first-use checks are ticked (and the URL/summary pass). The attach dialog now states each blocker instead of failing silently.
+- Attaching `https://mirai-staging.kleczynski11312.workers.dev/test-try` records a hosted demo version for approval workflow. Opening that URL 404s because attach does not create or verify a page. That is not a Clerk or D1 failure.
+- Bundled demo Save / stale-revision 409 remains blocked on this empty database unless a **fictional** three-playbook import is used. Do not import production Telegram transcripts here.
+
 ### Phase 3 — Production D1 copy into a new database (operator-only)
 
 Prerequisites: confirmed export path from Sites D1; private machine; production write freeze agreed.

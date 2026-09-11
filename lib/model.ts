@@ -25,3 +25,12 @@ export type Session = SessionData & { id: string; revision: number; createdAt: s
 export const demoChecks = ["Core client journey tested", "Fictional or approved demo data only", "Mobile layout and empty states checked", "Client access tested in a signed-out browser"];
 export function isDiscoveryComplete(s: SessionData) { return Boolean(s.source) || questions.every(q => Boolean(s.answers[q.key]?.trim())); }
 export function validDemoUrl(value: string) { try { const u = new URL(value); return u.protocol === "https:" && !u.username && !u.password && u.hostname !== "localhost" && !u.hostname.endsWith(".local"); } catch { return false; } }
+export function attachDemoBlockers(input: { url: string; summary: string; checks: string[] }) {
+  const reasons: string[] = [];
+  if (!input.url.trim()) reasons.push("Enter a hosted https demo URL.");
+  else if (!validDemoUrl(input.url)) reasons.push("The URL must be https and cannot be localhost or include a password.");
+  if (input.summary.trim().length < 10) reasons.push("Write at least 10 characters for what the client should try.");
+  const remaining = demoChecks.filter((check) => !input.checks.includes(check)).length;
+  if (remaining) reasons.push(`Confirm every first-use check (${remaining} still unchecked).`);
+  return reasons;
+}
