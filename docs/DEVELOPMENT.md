@@ -94,6 +94,34 @@ For schema changes: edit db/schema.ts, run `npm run db:generate`, review the gen
 
 ## Publishing versus editing
 
+### Development environment
+
+The normal agent deployment target is the private development Site:
+
+- URL: https://mirai-development.wishfishdev.chatgpt.site
+- Project: `Mirai — Development`
+- Clerk: development instance
+- D1: separate development database
+
+When an agent completes a change, “accepting” or deploying it to development
+means that the validated commit becomes available at that URL. It does not
+merge to `main`, change `mirai.party`, copy data to production, or promote the
+version automatically. Agents should use development to test UI, Clerk login,
+API behavior and fictional fixtures.
+
+Keep production and development runtime variables separate. In particular,
+never put production Clerk keys or production data into the development Site.
+The development deployment currently needs its own `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`,
+`CLERK_SECRET_KEY` and `MIRAI_OWNER_EMAIL` runtime values.
+
+### Production release
+
+Production remains `https://mirai.party`. A production release requires an
+explicit operator decision after development testing. The agent must deploy
+the exact reviewed commit and saved version to the production project, then
+verify the production deployment. A green development deployment is evidence
+for review, not production authorization.
+
 **Keep Sites hosting:** develop in any editor, validate locally, then use an authenticated Sites publishing workflow for this existing project. The established connector sequence is source credential → exact source push → saved build artifact → deployment. Do not assume a plain push publishes: that requires a separately authorized publish-on-push setting. This repository has no standalone CI release workflow or durable publishing credential. Do not put short-lived Sites credentials into a remote URL or checked-in configuration.
 
 **Move hosting to your own Cloudflare account:** treat this as a migration project, not `wrangler deploy` on the generated local configuration. That configuration has a placeholder D1 ID. Provision the real database, configure production bindings and secrets, transfer data through an authorized export/import path, and implement a verified authentication provider. Replace the Sites header-based identity adapter and reserved sign-in routes. Never expose the current trusted-header helper directly to the public Internet. Preserve owner IDs through an explicit mapping so existing records remain accessible.

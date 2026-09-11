@@ -29,7 +29,11 @@ Use docs/DEVELOPMENT.md's commands. Match checks to the change: calculation test
 
 Keep production data out of test fixtures. Do not run fixture-writing scripts against production. After schema changes, generate and review migrations; do not replay SQL blindly on an existing database.
 
-When publishing through Sites, reuse .openai/hosting.json's project_id, push the exact validated source, package its build and deploy the saved version within the authorized audience. Never commit credentials, .dev.vars, outputs/, .wrangler/ or .sites-runtime/.
+When publishing through Sites, default to the isolated development Site described in `docs/DEVELOPMENT.md`. Push the exact validated source, package its build and deploy the saved version only to that development project. Never commit credentials, `.dev.vars`, outputs/, `.wrangler/` or `.sites-runtime/`.
+
+- Development deployment is the normal agent feedback loop. It uses the private `Mirai — Development` Site, its separate source repository, development Clerk instance and separate D1 database. A successful development deployment does not promote, merge or deploy anything to `mirai.party`.
+- Do not change `.openai/hosting.json` from its production project ID as part of ordinary development work. If the Sites connector requires a development manifest, create it only in a temporary staging checkout/archive and restore the production manifest before finishing.
+- Production deployment is a separate operator-approved release. Before it, rerun the required checks, review the exact commit and current version/approval implications, then explicitly target the production project and production runtime secrets. Never infer production approval from a successful development deployment.
 
 ## Code review rules
 
