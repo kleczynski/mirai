@@ -54,9 +54,7 @@ export function sites({ mockAuth = true } = {}): Plugin {
         let authority: URL;
         let url: URL;
         try {
-          authority = new URL(
-            `${secure ? "https" : "http"}://${request.headers.host}`,
-          );
+          authority = new URL(`${secure ? "https" : "http"}://${request.headers.host}`);
           url = new URL(request.url ?? "/", authority);
         } catch {
           if (authPaths.has((request.url ?? "/").split("?")[0])) {
@@ -67,9 +65,7 @@ export function sites({ mockAuth = true } = {}): Plugin {
           return;
         }
 
-        const hostname = authority.hostname
-          .replace(/^\[|\]$/g, "")
-          .toLowerCase();
+        const hostname = authority.hostname.replace(/^\[|\]$/g, "").toLowerCase();
         if (
           !localHosts.has(hostname) ||
           !localAddresses.has(request.socket.remoteAddress ?? "") ||
@@ -108,11 +104,7 @@ export function sites({ mockAuth = true } = {}): Plugin {
           if (signInCookies.length === 1 && signInCookies[0] === "1") {
             setHeader(request, "oai-authenticated-user-id", localUserId);
             setHeader(request, "oai-authenticated-user-email", localEmail);
-            setHeader(
-              request,
-              "oai-authenticated-user-full-name",
-              localFullName,
-            );
+            setHeader(request, "oai-authenticated-user-full-name", localFullName);
             setHeader(
               request,
               "oai-authenticated-user-full-name-encoding",
@@ -146,10 +138,7 @@ export function sites({ mockAuth = true } = {}): Plugin {
           return;
         }
 
-        if (
-          request.method !== "GET" &&
-          (!signOut || request.method !== "POST")
-        ) {
+        if (request.method !== "GET" && (!signOut || request.method !== "POST")) {
           response.setHeader("Allow", signIn ? "GET" : "GET, POST");
           respond(response, 405);
           return;
@@ -157,10 +146,7 @@ export function sites({ mockAuth = true } = {}): Plugin {
 
         response.statusCode = request.method === "POST" ? 303 : 302;
         response.setHeader("Cache-Control", "private, no-store");
-        response.setHeader(
-          "Location",
-          safeReturn(url.searchParams.get("return_to")),
-        );
+        response.setHeader("Location", safeReturn(url.searchParams.get("return_to")));
         response.setHeader(
           "Set-Cookie",
           `${localCookieName}=${signIn ? "1" : ""}; Path=/; ${
@@ -199,11 +185,7 @@ function removeHeader(request: IncomingMessage, name: string): void {
   }
 }
 
-function setHeader(
-  request: IncomingMessage,
-  name: string,
-  value: string,
-): void {
+function setHeader(request: IncomingMessage, name: string, value: string): void {
   removeHeader(request, name);
   request.headers[name] = value;
   request.rawHeaders.push(name, value);

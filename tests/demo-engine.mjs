@@ -1,14 +1,144 @@
-import assert from 'node:assert/strict';
-import { cuttingPlan,restock,structureNote,retailFromCSV,parseCSV,csvValue,demoDefaults,validEAN } from '../lib/demo-engine.ts';
-const fixture=structuredClone(demoDefaults.carpenter);const plan=cuttingPlan(fixture);assert.equal(plan.partCount,6);assert.equal(plan.boards.flat().length,6);
-function checkLayout(c){const out=cuttingPlan(c);for(const board of out.boards){for(const p of board){assert.ok(p.x>=0&&p.y>=0&&p.x+p.width<=c.boardWidth+.001&&p.y+p.height<=c.boardHeight+.001);if(p.grain)assert.equal(p.rotated,false);}for(let i=0;i<board.length;i++)for(let j=i+1;j<board.length;j++){const a=board[i],b=board[j];assert.ok(a.x+a.width+c.kerf<=b.x+.001||b.x+b.width+c.kerf<=a.x+.001||a.y+a.height+c.kerf<=b.y+.001||b.y+b.height+c.kerf<=a.y+.001,'Pieces preserve kerf separation');}}return out;}
+import assert from "node:assert/strict";
+import {
+  cuttingPlan,
+  restock,
+  structureNote,
+  retailFromCSV,
+  parseCSV,
+  csvValue,
+  demoDefaults,
+  validEAN,
+} from "../lib/demo-engine.ts";
+const fixture = structuredClone(demoDefaults.carpenter);
+const plan = cuttingPlan(fixture);
+assert.equal(plan.partCount, 6);
+assert.equal(plan.boards.flat().length, 6);
+function checkLayout(c) {
+  const out = cuttingPlan(c);
+  for (const board of out.boards) {
+    for (const p of board) {
+      assert.ok(
+        p.x >= 0 &&
+          p.y >= 0 &&
+          p.x + p.width <= c.boardWidth + 0.001 &&
+          p.y + p.height <= c.boardHeight + 0.001,
+      );
+      if (p.grain) assert.equal(p.rotated, false);
+    }
+    for (let i = 0; i < board.length; i++)
+      for (let j = i + 1; j < board.length; j++) {
+        const a = board[i],
+          b = board[j];
+        assert.ok(
+          a.x + a.width + c.kerf <= b.x + 0.001 ||
+            b.x + b.width + c.kerf <= a.x + 0.001 ||
+            a.y + a.height + c.kerf <= b.y + 0.001 ||
+            b.y + b.height + c.kerf <= a.y + 0.001,
+          "Pieces preserve kerf separation",
+        );
+      }
+  }
+  return out;
+}
 checkLayout(fixture);
-assert.equal(cuttingPlan({...fixture,parts:[{id:'x',name:'full',width:2800,height:2070,quantity:1,grain:true,edge:0}]}).utilization,100);
-assert.throws(()=>cuttingPlan({...fixture,parts:[{id:'x',name:'too big',width:3000,height:2100,quantity:1,grain:true,edge:0}]}));
-const rotate={boardWidth:200,boardHeight:100,kerf:3.2,parts:[{id:'x',name:'rotate',width:80,height:180,quantity:1,grain:false,edge:0}]};assert.equal(cuttingPlan(rotate).boards[0][0].rotated,true);assert.throws(()=>cuttingPlan({...rotate,parts:[{...rotate.parts[0],grain:true}]}));
-let seed=41;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};for(let t=0;t<100;t++){const parts=Array.from({length:20},(_,i)=>({id:String(i),name:'part',width:100+Math.floor(rand()*900),height:100+Math.floor(rand()*900),quantity:1,grain:rand()>.5,edge:0}));checkLayout({...fixture,parts});}
-const retail=structuredClone(demoDefaults.retail);assert.ok(retail.items.every(p=>validEAN(p.ean)));assert.equal(restock(retail)[0].issue,'Potwierdź stan półki');retail.items[0].shelf=0;assert.equal(restock(retail)[0].qty,20);assert.equal(restock(retail)[0].best.supplier,'Specjał');retail.items[0].shelf=30;assert.equal(restock(retail)[0].qty,0);
-retail.items[1].ean=retail.items[0].ean;assert.ok(restock(retail).slice(0,2).every(p=>p.issue==='Powtórzony EAN'));
-const csv='name;ean;stock;shelf;sales7;days;pack;Eurocash;Makro;Specjał\n"Masło; test";5901234123457;5;0;28;3;10;6.20;6.45;6.10\n';assert.equal(retailFromCSV(csv).items[0].name,'Masło; test');assert.equal(restock(retailFromCSV(csv))[0].qty,20);assert.throws(()=>parseCSV('a,b\n"unclosed,b'));assert.throws(()=>parseCSV('a,a\n1,2'));assert.ok(csvValue('=SUM(1,2)').startsWith('"\''));
-const transcript='Fikcyjny opis. Ząb 16, następnie ząb 26. Ząb 16 opisany ponownie. Nie podano rozpoznania.';const note=structureNote(transcript);assert.deepEqual(note.teeth,['16','26']);assert.ok(note.note.includes(transcript));assert.ok(note.note.includes('Kody rozliczeniowe: nie przypisano.'));assert.throws(()=>structureNote(''));
-console.log('Passed: 100 generated cutting layouts, kerf and grain constraints, exact fit, oversize errors, replenishment and supplier selection, EAN checks, CSV parsing/export safety, and dental evidence preservation.');
+assert.equal(
+  cuttingPlan({
+    ...fixture,
+    parts: [
+      {
+        id: "x",
+        name: "full",
+        width: 2800,
+        height: 2070,
+        quantity: 1,
+        grain: true,
+        edge: 0,
+      },
+    ],
+  }).utilization,
+  100,
+);
+assert.throws(() =>
+  cuttingPlan({
+    ...fixture,
+    parts: [
+      {
+        id: "x",
+        name: "too big",
+        width: 3000,
+        height: 2100,
+        quantity: 1,
+        grain: true,
+        edge: 0,
+      },
+    ],
+  }),
+);
+const rotate = {
+  boardWidth: 200,
+  boardHeight: 100,
+  kerf: 3.2,
+  parts: [
+    {
+      id: "x",
+      name: "rotate",
+      width: 80,
+      height: 180,
+      quantity: 1,
+      grain: false,
+      edge: 0,
+    },
+  ],
+};
+assert.equal(cuttingPlan(rotate).boards[0][0].rotated, true);
+assert.throws(() =>
+  cuttingPlan({ ...rotate, parts: [{ ...rotate.parts[0], grain: true }] }),
+);
+let seed = 41;
+const rand = () => {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+};
+for (let t = 0; t < 100; t++) {
+  const parts = Array.from({ length: 20 }, (_, i) => ({
+    id: String(i),
+    name: "part",
+    width: 100 + Math.floor(rand() * 900),
+    height: 100 + Math.floor(rand() * 900),
+    quantity: 1,
+    grain: rand() > 0.5,
+    edge: 0,
+  }));
+  checkLayout({ ...fixture, parts });
+}
+const retail = structuredClone(demoDefaults.retail);
+assert.ok(retail.items.every((p) => validEAN(p.ean)));
+assert.equal(restock(retail)[0].issue, "Potwierdź stan półki");
+retail.items[0].shelf = 0;
+assert.equal(restock(retail)[0].qty, 20);
+assert.equal(restock(retail)[0].best.supplier, "Specjał");
+retail.items[0].shelf = 30;
+assert.equal(restock(retail)[0].qty, 0);
+retail.items[1].ean = retail.items[0].ean;
+assert.ok(
+  restock(retail)
+    .slice(0, 2)
+    .every((p) => p.issue === "Powtórzony EAN"),
+);
+const csv =
+  'name;ean;stock;shelf;sales7;days;pack;Eurocash;Makro;Specjał\n"Masło; test";5901234123457;5;0;28;3;10;6.20;6.45;6.10\n';
+assert.equal(retailFromCSV(csv).items[0].name, "Masło; test");
+assert.equal(restock(retailFromCSV(csv))[0].qty, 20);
+assert.throws(() => parseCSV('a,b\n"unclosed,b'));
+assert.throws(() => parseCSV("a,a\n1,2"));
+assert.ok(csvValue("=SUM(1,2)").startsWith("\"'"));
+const transcript =
+  "Fikcyjny opis. Ząb 16, następnie ząb 26. Ząb 16 opisany ponownie. Nie podano rozpoznania.";
+const note = structureNote(transcript);
+assert.deepEqual(note.teeth, ["16", "26"]);
+assert.ok(note.note.includes(transcript));
+assert.ok(note.note.includes("Kody rozliczeniowe: nie przypisano."));
+assert.throws(() => structureNote(""));
+console.log(
+  "Passed: 100 generated cutting layouts, kerf and grain constraints, exact fit, oversize errors, replenishment and supplier selection, EAN checks, CSV parsing/export safety, and dental evidence preservation.",
+);

@@ -18,12 +18,16 @@ const forbiddenVars = [
 ];
 
 if (process.argv.includes("--remote") || process.argv.includes("--deploy")) {
-  console.error("prepare-staging-deploy only writes a config. It does not deploy or touch a remote database.");
+  console.error(
+    "prepare-staging-deploy only writes a config. It does not deploy or touch a remote database.",
+  );
   process.exit(1);
 }
 
 if (!existsSync(generatedConfig)) {
-  console.error("Missing dist/server/wrangler.json. Run `npm run build` once, then retry.");
+  console.error(
+    "Missing dist/server/wrangler.json. Run `npm run build` once, then retry.",
+  );
   process.exit(1);
 }
 
@@ -36,8 +40,14 @@ if (staging.name !== "mirai-staging") {
 }
 
 const database = staging.d1_databases?.[0];
-if (!database?.database_id || database.binding !== "DB" || database.database_name !== "mirai-staging") {
-  console.error("deploy/staging.json must bind DB to database_name mirai-staging with a real database_id.");
+if (
+  !database?.database_id ||
+  database.binding !== "DB" ||
+  database.database_name !== "mirai-staging"
+) {
+  console.error(
+    "deploy/staging.json must bind DB to database_name mirai-staging with a real database_id.",
+  );
   process.exit(1);
 }
 
@@ -59,5 +69,9 @@ const config = {
 };
 
 writeFileSync(outputConfig, `${JSON.stringify(config, null, 2)}\n`);
-console.log(`Wrote ${path.relative(projectRoot, outputConfig)} for Worker ${staging.name}.`);
-console.log("Deploy separately with wrangler and development Clerk secrets. Do not use this config for mirai.party.");
+console.log(
+  `Wrote ${path.relative(projectRoot, outputConfig)} for Worker ${staging.name}.`,
+);
+console.log(
+  "Deploy separately with wrangler and development Clerk secrets. Do not use this config for mirai.party.",
+);

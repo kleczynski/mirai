@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import MiraiClerkProvider from './clerk-provider';
+import "./modern-ui.css";
+import MiraiClerkProvider from "./clerk-provider";
 
 export const metadata: Metadata = {
   title: "Mirai — From conversation to a working product",
@@ -23,10 +24,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
-        <MiraiClerkProvider>
-          {children}
-        </MiraiClerkProvider>
+      <body className="antialiased mirai-modern">
+        <MiraiClerkProvider>{children}</MiraiClerkProvider>
       </body>
     </html>
   );

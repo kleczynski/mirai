@@ -1,12 +1,16 @@
-'use client';
+"use client";
 
-import { ClerkProvider, SignIn, SignUp, useClerk } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, useClerk } from "@clerk/react";
 
-export default function MiraiClerkProvider({ children }: { children: React.ReactNode }) {
+export default function MiraiClerkProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <ClerkProvider
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      appearance={{ variables: { colorPrimary: '#315bdd', borderRadius: '14px' } }}
+      appearance={{ variables: { colorPrimary: "#315bdd", borderRadius: "14px" } }}
     >
       {children}
     </ClerkProvider>
@@ -14,7 +18,18 @@ export default function MiraiClerkProvider({ children }: { children: React.React
 }
 
 export function MiraiSignIn() {
-  return <SignIn appearance={{ variables: { colorPrimary: '#315bdd', borderRadius: '14px' }, elements: { card: 'auth-clerk-card', headerTitle: 'auth-clerk-title', formButtonPrimary: 'auth-clerk-button' } }} />;
+  return (
+    <SignIn
+      appearance={{
+        variables: { colorPrimary: "#315bdd", borderRadius: "14px" },
+        elements: {
+          card: "auth-clerk-card",
+          headerTitle: "auth-clerk-title",
+          formButtonPrimary: "auth-clerk-button",
+        },
+      }}
+    />
+  );
 }
 
 export function MiraiSignUp() {

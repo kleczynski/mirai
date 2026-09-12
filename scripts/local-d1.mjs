@@ -12,12 +12,16 @@ const persistTo = ".wrangler/state";
 const seed = process.argv.includes("--seed");
 
 if (process.argv.includes("--remote")) {
-  console.error("local-d1 refuses --remote. This command only updates the local Miniflare D1.");
+  console.error(
+    "local-d1 refuses --remote. This command only updates the local Miniflare D1.",
+  );
   process.exit(1);
 }
 
 if (!existsSync(wranglerConfig)) {
-  console.error("Missing dist/server/wrangler.json. Run `npm run build` once, then retry `npm run db:local`.");
+  console.error(
+    "Missing dist/server/wrangler.json. Run `npm run build` once, then retry `npm run db:local`.",
+  );
   process.exit(1);
 }
 
@@ -35,10 +39,14 @@ function wrangler(args) {
 
 function execute(extra) {
   return wrangler([
-    "d1", "execute", "DB",
+    "d1",
+    "execute",
+    "DB",
     "--local",
-    "--config", wranglerConfig,
-    "--persist-to", persistTo,
+    "--config",
+    wranglerConfig,
+    "--persist-to",
+    persistTo,
     ...extra,
   ]);
 }
@@ -53,7 +61,11 @@ function parseResults(stdout) {
 }
 
 function existingTables() {
-  const stdout = execute(["--json", "--command", "SELECT name FROM sqlite_master WHERE type = 'table'"]);
+  const stdout = execute([
+    "--json",
+    "--command",
+    "SELECT name FROM sqlite_master WHERE type = 'table'",
+  ]);
   return new Set(parseResults(stdout).map((row) => String(row.name ?? "")));
 }
 
@@ -83,8 +95,14 @@ if (seed) {
     throw new Error("Cannot seed: sessions table is missing after migrations.");
   }
   const seedFile = path.join(projectRoot, "db/local-seed.sql");
-  console.log("seed fictional local session (owner_id local_seedy; invitation expired)");
+  console.log(
+    "seed fictional local session (owner_id local_seedy; invitation expired)",
+  );
   execute(["--file", seedFile]);
 }
 
-console.log(seed ? "Local D1 migrations and fictional seed are up to date." : "Local D1 migrations are up to date. Pass --seed for the fictional local session.");
+console.log(
+  seed
+    ? "Local D1 migrations and fictional seed are up to date."
+    : "Local D1 migrations are up to date. Pass --seed for the fictional local session.",
+);

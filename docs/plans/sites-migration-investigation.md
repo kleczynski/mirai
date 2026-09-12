@@ -7,7 +7,6 @@
 > are historical, not remaining work. Do not replay DNS changes, import legacy
 > data or use the separate Sites database as an automatic rollback target.
 
-
 > **2026-09-11 execution update:** The operator chose an empty new-client
 > production database instead of export/copy/remap. See
 > [new-client production separation](production-new-clients.md) for the new D1,
@@ -30,7 +29,7 @@ Mirai is already a Vinext Worker that talks to D1 with parameterized SQL. Local 
 
 Moving to **your own Cloudflare account** keeps the same runtime (React 19, Vinext, D1, invitation bearers, approval/version rules). The real work is: a committed Wrangler config with real database IDs (the generated `dist/server/wrangler.json` uses a placeholder), Clerk-only owner auth with an explicit `owner_id` remap, stripping trusted-header auth before the Worker is public, an operator-only D1 export/import, and a DNS cutover of `mirai.party` after staging gates pass.
 
-**Stay on Sites** is the correct *immediate* posture. It avoids a data/auth cutover while discovery chat is still undeployed and while production `owner_id` values are still Sites user IDs. Use that time to add repeatable local DB setup, broaden CI, and finish Clerk as the only owner sign-in — work that is required for Option 2 anyway.
+**Stay on Sites** is the correct _immediate_ posture. It avoids a data/auth cutover while discovery chat is still undeployed and while production `owner_id` values are still Sites user IDs. Use that time to add repeatable local DB setup, broaden CI, and finish Clerk as the only owner sign-in — work that is required for Option 2 anyway.
 
 **Alternative stack** (Vercel + Postgres/Supabase, or a Node server) is a product rewrite: every route uses `cloudflare:workers` / D1 `prepare`/`batch`, discovery uses SQLite `json_extract` / `json_array_length`, and Vinext’s Worker adapter is the server. That is not a configuration change.
 
@@ -99,33 +98,33 @@ flowchart TB
 
 Facts from this checkout:
 
-| Item | Evidence |
-| --- | --- |
-| Production Site | `.openai/hosting.json` project `appgprj_6aa18e60d0088191b9e9311ce7a8ecc5`, D1 binding `DB`, R2 `null` |
-| Development Site | [DEVELOPMENT.md](../DEVELOPMENT.md): `Mirai — Development`, `appgprj_6aa3b79a2f5c8191a7c1df2fd5dbe084`, separate Clerk + D1 |
-| Custom domain | [MVP.md](../MVP.md): `mirai.party` A records `162.159.143.30` and `172.66.3.26`, DNS-only; legacy Sites URL still serves the app |
-| Auth | `lib/server.ts` prefers Clerk `__session` + `CLERK_SECRET_KEY`; else `getChatGPTUser()` headers. Email must match `MIRAI_OWNER_EMAIL` |
-| Client access | 256-bit bearer in URL fragment; SHA-256 in `sessions.token_hash`; no Sites identity required |
-| Publish | Sites connector only: source credential → exact source push → saved build → deploy. No durable publish credential in repo |
-| CI | `.github/workflows/verify.yml` typechecks, lints, runs `tests/demo-engine.mjs`, builds. Does not publish. Lifecycle HTTP tests are local-only |
-| Local D1 ID | `vite.config.ts` placeholder `00000000-0000-4000-8000-000000000000` / name `site-creator-d1` |
-| Discovery chat | Implemented locally; not deployed. Needs `MIRAI_DISCOVERY_ENABLED` + `MIRAI_OPENAI_API_KEY` and migration `0002_polite_bucky.sql` |
+| Item             | Evidence                                                                                                                                      |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production Site  | `.openai/hosting.json` project `appgprj_6aa18e60d0088191b9e9311ce7a8ecc5`, D1 binding `DB`, R2 `null`                                         |
+| Development Site | [DEVELOPMENT.md](../DEVELOPMENT.md): `Mirai — Development`, `appgprj_6aa3b79a2f5c8191a7c1df2fd5dbe084`, separate Clerk + D1                   |
+| Custom domain    | [MVP.md](../MVP.md): `mirai.party` A records `162.159.143.30` and `172.66.3.26`, DNS-only; legacy Sites URL still serves the app              |
+| Auth             | `lib/server.ts` prefers Clerk `__session` + `CLERK_SECRET_KEY`; else `getChatGPTUser()` headers. Email must match `MIRAI_OWNER_EMAIL`         |
+| Client access    | 256-bit bearer in URL fragment; SHA-256 in `sessions.token_hash`; no Sites identity required                                                  |
+| Publish          | Sites connector only: source credential → exact source push → saved build → deploy. No durable publish credential in repo                     |
+| CI               | `.github/workflows/verify.yml` typechecks, lints, runs `tests/demo-engine.mjs`, builds. Does not publish. Lifecycle HTTP tests are local-only |
+| Local D1 ID      | `vite.config.ts` placeholder `00000000-0000-4000-8000-000000000000` / name `site-creator-d1`                                                  |
+| Discovery chat   | Implemented locally; not deployed. Needs `MIRAI_DISCOVERY_ENABLED` + `MIRAI_OPENAI_API_KEY` and migration `0002_polite_bucky.sql`             |
 
 ---
 
 ## 3. Option comparison
 
-| | 1. Stay on Sites | 2. Own Cloudflare account | 3. Alternative stack |
-| --- | --- | --- | --- |
-| **What changes** | Local/CI workflow only. Keep Sites publish, D1, SIWC | Same Vinext Worker; operator-owned Workers + D1 (+ optional R2) | Replace Worker/D1/Vinext with e.g. Vercel + Postgres/Supabase or Node |
-| **Effort** | Days | 1–2 focused weeks after export access exists | Multiple weeks; most server code rewritten |
-| **Risk to live sessions** | Low | Medium: export, `owner_id` remap, DNS, Clerk-only | High: query dialect, auth, hosting, and demo URLs all move |
-| **Cost** | Sites + existing Clerk | Cloudflare Workers/D1 (likely Free/Paid) + Clerk | New host + database + rewrite time |
-| **Downtime** | None for hosting | Short write freeze at cutover if export/import is rehearsed | Longer; two-step rewrite then cutover |
-| **Reversibility** | N/A (already there) | High if Sites URL stays up through week one | Low once SQL and adapters diverge |
-| **Operator control of DB/secrets/CI** | Weak (Sites-provisioned) | Strong | Strong, but paid for with a rewrite |
-| **Trusted-header exposure** | Headers stay behind Sites dispatch | **Must remove** `getChatGPTUser` before the Worker is public | Same: never reimplement SIWC headers |
-| **Fits current code** | Yes | Yes, with a real Wrangler config | No. Raw D1 SQL + SQLite JSON functions + `cloudflare:workers` |
+|                                       | 1. Stay on Sites                                     | 2. Own Cloudflare account                                       | 3. Alternative stack                                                  |
+| ------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **What changes**                      | Local/CI workflow only. Keep Sites publish, D1, SIWC | Same Vinext Worker; operator-owned Workers + D1 (+ optional R2) | Replace Worker/D1/Vinext with e.g. Vercel + Postgres/Supabase or Node |
+| **Effort**                            | Days                                                 | 1–2 focused weeks after export access exists                    | Multiple weeks; most server code rewritten                            |
+| **Risk to live sessions**             | Low                                                  | Medium: export, `owner_id` remap, DNS, Clerk-only               | High: query dialect, auth, hosting, and demo URLs all move            |
+| **Cost**                              | Sites + existing Clerk                               | Cloudflare Workers/D1 (likely Free/Paid) + Clerk                | New host + database + rewrite time                                    |
+| **Downtime**                          | None for hosting                                     | Short write freeze at cutover if export/import is rehearsed     | Longer; two-step rewrite then cutover                                 |
+| **Reversibility**                     | N/A (already there)                                  | High if Sites URL stays up through week one                     | Low once SQL and adapters diverge                                     |
+| **Operator control of DB/secrets/CI** | Weak (Sites-provisioned)                             | Strong                                                          | Strong, but paid for with a rewrite                                   |
+| **Trusted-header exposure**           | Headers stay behind Sites dispatch                   | **Must remove** `getChatGPTUser` before the Worker is public    | Same: never reimplement SIWC headers                                  |
+| **Fits current code**                 | Yes                                                  | Yes, with a real Wrangler config                                | No. Raw D1 SQL + SQLite JSON functions + `cloudflare:workers`         |
 
 **Why Option 2 over 3:** `docs/DEVELOPMENT.md` already states that a Supabase/Vercel move is not configuration-only. Runtime queries never use Drizzle’s query builder (`getDb()` is unused except `examples/d1`). Discovery admission SQL uses `json_extract` / `json_array_length` and D1 `batch`. Those would have to be rewritten for Postgres.
 
@@ -183,11 +182,11 @@ Existing local checks plus, if CI is expanded, the localhost lifecycle suites. N
 
 **What replaces Sites publish**
 
-| Sites today | Operator-owned Worker |
-| --- | --- |
-| Connector source push | `git` to the operator’s repo (this one or a deploy mirror) |
-| Sites build packages `dist/.openai/hosting.json` + drizzle | `npm run build` then `wrangler deploy` against a **committed** config with real D1 IDs |
-| Sites deploys the saved artifact | [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) (`wrangler deploy` on the production branch, `wrangler versions upload` on others) **or** GitHub Actions + [wrangler-action](https://github.com/cloudflare/wrangler-action) |
+| Sites today                                                | Operator-owned Worker                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connector source push                                      | `git` to the operator’s repo (this one or a deploy mirror)                                                                                                                                                                                            |
+| Sites build packages `dist/.openai/hosting.json` + drizzle | `npm run build` then `wrangler deploy` against a **committed** config with real D1 IDs                                                                                                                                                                |
+| Sites deploys the saved artifact                           | [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) (`wrangler deploy` on the production branch, `wrangler versions upload` on others) **or** GitHub Actions + [wrangler-action](https://github.com/cloudflare/wrangler-action) |
 
 Do not deploy `dist/server/wrangler.json` as-is. README states this starter does not use `wrangler.jsonc`; Option 2 needs one (or `wrangler.json`) that the repo owns:
 
@@ -200,11 +199,11 @@ Do not deploy `dist/server/wrangler.json` as-is. README states this starter does
 
 Dev / staging / prod:
 
-| Env | Hostname | Clerk | D1 | Secrets |
-| --- | --- | --- | --- | --- |
-| Local | `http://localhost:5173` | Dev keys in ignored `.env.local` / `.dev.vars` | Miniflare placeholder | `MIRAI_OWNER_EMAIL=seedy@sites.test` |
-| Staging | New `*.workers.dev` or `staging.mirai.party` | Development Clerk | New D1, copied/fictional data | Dev Clerk + owner email |
-| Production | `mirai.party` after cutover | Production Clerk | New D1 imported from Sites | Production secrets |
+| Env        | Hostname                                     | Clerk                                          | D1                            | Secrets                              |
+| ---------- | -------------------------------------------- | ---------------------------------------------- | ----------------------------- | ------------------------------------ |
+| Local      | `http://localhost:5173`                      | Dev keys in ignored `.env.local` / `.dev.vars` | Miniflare placeholder         | `MIRAI_OWNER_EMAIL=seedy@sites.test` |
+| Staging    | New `*.workers.dev` or `staging.mirai.party` | Development Clerk                              | New D1, copied/fictional data | Dev Clerk + owner email              |
+| Production | `mirai.party` after cutover                  | Production Clerk                               | New D1 imported from Sites    | Production secrets                   |
 
 Keep three D1s. Never put production Clerk keys or production rows in staging ([DEVELOPMENT.md](../DEVELOPMENT.md)).
 
@@ -216,18 +215,18 @@ Keep three D1s. Never put production Clerk keys or production rows in staging ([
 
 **Inventory (runtime uses D1 `prepare` / `batch`, not Drizzle queries)**
 
-| Surface | SQL / API | Auth |
-| --- | --- | --- |
-| `lib/server.ts` | `SELECT * FROM sessions WHERE id = ? AND owner_id = ?`; `token_hash` + expiry; optimistic `UPDATE … revision = ?` | Owner or invitation |
-| `app/api/sessions/route.ts` | List by `owner_id` limit 500; insert; invite/revoke `token_hash`; demo attach via `save()` | Owner |
-| `app/api/client/route.ts` | Client read; answer update with token + revision; feedback via `save()` | Invitation |
-| `app/api/demo/route.ts` | `demo_states` select/insert/update by `sessionId:demoId` | Owner or invitation; session id must match |
-| `app/api/import/route.ts` | Batch insert; id = UUID-shaped hash of `owner_id + ':telegram:' + sourceSessionId`; `ON CONFLICT(id) DO NOTHING` | Owner |
-| `app/api/sessions/discovery/route.ts` | Aggregates on `discovery_requests` | Owner |
-| `lib/discovery-service.ts` | Invitation session read; SQLite JSON + admission insert; `db.batch` for save + ledger | Invitation |
-| `db/schema.ts` | Drizzle tables for generation only | — |
-| `db/index.ts` `getDb()` | Unused by app routes | — |
-| `examples/d1/` | Starter sample; not Mirai product | — |
+| Surface                               | SQL / API                                                                                                         | Auth                                       |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `lib/server.ts`                       | `SELECT * FROM sessions WHERE id = ? AND owner_id = ?`; `token_hash` + expiry; optimistic `UPDATE … revision = ?` | Owner or invitation                        |
+| `app/api/sessions/route.ts`           | List by `owner_id` limit 500; insert; invite/revoke `token_hash`; demo attach via `save()`                        | Owner                                      |
+| `app/api/client/route.ts`             | Client read; answer update with token + revision; feedback via `save()`                                           | Invitation                                 |
+| `app/api/demo/route.ts`               | `demo_states` select/insert/update by `sessionId:demoId`                                                          | Owner or invitation; session id must match |
+| `app/api/import/route.ts`             | Batch insert; id = UUID-shaped hash of `owner_id + ':telegram:' + sourceSessionId`; `ON CONFLICT(id) DO NOTHING`  | Owner                                      |
+| `app/api/sessions/discovery/route.ts` | Aggregates on `discovery_requests`                                                                                | Owner                                      |
+| `lib/discovery-service.ts`            | Invitation session read; SQLite JSON + admission insert; `db.batch` for save + ledger                             | Invitation                                 |
+| `db/schema.ts`                        | Drizzle tables for generation only                                                                                | —                                          |
+| `db/index.ts` `getDb()`               | Unused by app routes                                                                                              | —                                          |
+| `examples/d1/`                        | Starter sample; not Mirai product                                                                                 | —                                          |
 
 Pending files: `drizzle/0000_lucky_silver_sable.sql` (sessions), `0001_tiny_pepper_potts.sql` (demo_states), `0002_polite_bucky.sql` (discovery_requests). Journal is sqlite dialect. Local apply is untracked `d1 execute --file`; do not replay on a DB that already has the objects.
 
@@ -281,20 +280,20 @@ Client invitations are independent of owner auth. `clientSession` / discovery re
 - Bookmarks on `*.chatgpt.site` after that origin is removed (unless redirected)
 - Redirects that drop the URL fragment (the bearer never reaches the server)
 - `body()` and discovery origin checks: `Origin` must equal `new URL(request.url).origin`. Cross-origin browser POSTs fail. Same-origin after cutover is fine.
-- New invites are minted as ``${location.origin}/s#${token}``. After cutover they will be `https://mirai.party/s#…`.
+- New invites are minted as `${location.origin}/s#${token}`. After cutover they will be `https://mirai.party/s#…`.
 
 #### D. Runtime secrets and features
 
-| Variable | Role | After migration |
-| --- | --- | --- |
-| `MIRAI_OWNER_EMAIL` | Single-user allowlist | Required; fail closed |
-| `CLERK_SECRET_KEY` | Server verify + user fetch | Required; no Sites fallback |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk UI | Required; environment-specific |
-| `CLERK_JWT_KEY` | Optional networkless JWT | Recommended on Workers |
-| `MIRAI_DISCOVERY_ENABLED` | Opt-in chat | Keep `false` on first cutover |
-| `MIRAI_OPENAI_API_KEY` | Terra Responses API | Only when chat is approved |
-| `MIRAI_DISCOVERY_MODEL` | Must stay `gpt-5.6-terra` | Same |
-| `MIRAI_DISCOVERY_SESSION_CAP_USD` | Cap ≤ $1 | Same |
+| Variable                            | Role                       | After migration                |
+| ----------------------------------- | -------------------------- | ------------------------------ |
+| `MIRAI_OWNER_EMAIL`                 | Single-user allowlist      | Required; fail closed          |
+| `CLERK_SECRET_KEY`                  | Server verify + user fetch | Required; no Sites fallback    |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk UI                   | Required; environment-specific |
+| `CLERK_JWT_KEY`                     | Optional networkless JWT   | Recommended on Workers         |
+| `MIRAI_DISCOVERY_ENABLED`           | Opt-in chat                | Keep `false` on first cutover  |
+| `MIRAI_OPENAI_API_KEY`              | Terra Responses API        | Only when chat is approved     |
+| `MIRAI_DISCOVERY_MODEL`             | Must stay `gpt-5.6-terra`  | Same                           |
+| `MIRAI_DISCOVERY_SESSION_CAP_USD`   | Cap ≤ $1                   | Same                           |
 
 Bundled demos at `/demo/[sessionId]` stay on the same Worker. Authorization is session + bearer or owner. Approval is still demo-id-scoped; new versions clear approval (`app/api/sessions` + `app/api/client`). Do not change demo meaning in the same deploy as hosting. Discovery chat should ride a later release so cutover rollback is hosting-only.
 
@@ -494,27 +493,27 @@ UPDATE sessions SET owner_id = ? WHERE owner_id = ?;
 
 ## 8. Sites-specific coupling audit
 
-| Location | Role | Class |
-| --- | --- | --- |
-| `app/chatgpt-auth.ts` | Reads `oai-authenticated-user-*`; reserved SIWC paths | **Blocking** for a public Worker — must not be trusted off Sites. Replaceable as a local-only test helper |
-| `lib/server.ts` `getChatGPTUser()` fallback | Production owner identity if Clerk unset | **Blocking** |
-| `app/workspace.tsx`, `app/demo/workbench.tsx` | SIWC sign-in/out links | **Blocking** for UX on a non-Sites host; swap to Clerk |
-| Tests `session-flow.mjs`, `import-demo-flow.mjs`, `discovery-flow.mjs` | Depend on portable SIWC mock | **Replaceable** — keep loopback mock or add Clerk test identity |
-| `build/sites-vite-plugin.ts` | Loopback mock auth; copies `.openai/hosting.json` + `drizzle/` to `dist/.openai/` | **Replaceable** — keep mock for local tests; Sites packaging unused after Option 2 |
-| `.openai/hosting.json` | Sites project id + D1 binding name | **Blocking** for Sites decommission; **do not change production id** during ordinary work. Option 2 adds a real Wrangler config instead |
-| `vite.config.ts` | Reads hosting.json; placeholder D1; `@cloudflare/vite-plugin` | **Replaceable** — keep for local; add real ids only in deploy config |
-| `scripts/sites-env.mjs` | Project-local Wrangler/Miniflare paths | **Replaceable** — useful after Sites; rename later |
-| `scripts/run-framework.mjs` | portable vs managed-linux Vite/Vinext | **Replaceable** — managed-linux is Codex/Sites supervisor |
-| `scripts/execution-profile.mjs` | Reads `.sites-runtime/execution-profile.json` | **Replaceable**; clean clones default `portable` |
-| `scripts/install-ci.mjs` | Sites-oriented npm ci | **Replaceable**; GitHub already uses `npm ci` |
-| `db/index.ts` | Error text mentions `.openai/hosting.json` | **Cosmetic** (unused by app routes) |
-| `cloudflare-env.d.ts` | `DB` / unused `BUCKET` | **Replaceable** — keep `DB` for Option 2 |
-| `lib/documents.ts` | Brief says “Use the Sites connector to build and host the demo” | **Cosmetic/docs** — customer demos may still use Sites; control-plane hosting is separate |
-| `README.md` | Sites lifecycle, SIWC headers, local mock | **Cosmetic/docs** |
-| `docs/MVP.md`, `docs/DEVELOPMENT.md`, `AGENTS.md` | Sites publish rules, project ids, trusted-header warning | **Cosmetic/docs** after cutover; keep warnings until decommission |
-| `package.json` name `site-creator-vinext-starter` | Starter identity | **Cosmetic** |
-| `app/layout.tsx` `codex-preview` metadata | Codex preview hint | **Cosmetic** |
-| Reserved paths `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback` | Dispatch-owned on Sites; must not be reimplemented as trusted auth on the public internet | **Blocking** if copied to a public Worker |
+| Location                                                                    | Role                                                                                      | Class                                                                                                                                   |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/chatgpt-auth.ts`                                                       | Reads `oai-authenticated-user-*`; reserved SIWC paths                                     | **Blocking** for a public Worker — must not be trusted off Sites. Replaceable as a local-only test helper                               |
+| `lib/server.ts` `getChatGPTUser()` fallback                                 | Production owner identity if Clerk unset                                                  | **Blocking**                                                                                                                            |
+| `app/workspace.tsx`, `app/demo/workbench.tsx`                               | SIWC sign-in/out links                                                                    | **Blocking** for UX on a non-Sites host; swap to Clerk                                                                                  |
+| Tests `session-flow.mjs`, `import-demo-flow.mjs`, `discovery-flow.mjs`      | Depend on portable SIWC mock                                                              | **Replaceable** — keep loopback mock or add Clerk test identity                                                                         |
+| `build/sites-vite-plugin.ts`                                                | Loopback mock auth; copies `.openai/hosting.json` + `drizzle/` to `dist/.openai/`         | **Replaceable** — keep mock for local tests; Sites packaging unused after Option 2                                                      |
+| `.openai/hosting.json`                                                      | Sites project id + D1 binding name                                                        | **Blocking** for Sites decommission; **do not change production id** during ordinary work. Option 2 adds a real Wrangler config instead |
+| `vite.config.ts`                                                            | Reads hosting.json; placeholder D1; `@cloudflare/vite-plugin`                             | **Replaceable** — keep for local; add real ids only in deploy config                                                                    |
+| `scripts/sites-env.mjs`                                                     | Project-local Wrangler/Miniflare paths                                                    | **Replaceable** — useful after Sites; rename later                                                                                      |
+| `scripts/run-framework.mjs`                                                 | portable vs managed-linux Vite/Vinext                                                     | **Replaceable** — managed-linux is Codex/Sites supervisor                                                                               |
+| `scripts/execution-profile.mjs`                                             | Reads `.sites-runtime/execution-profile.json`                                             | **Replaceable**; clean clones default `portable`                                                                                        |
+| `scripts/install-ci.mjs`                                                    | Sites-oriented npm ci                                                                     | **Replaceable**; GitHub already uses `npm ci`                                                                                           |
+| `db/index.ts`                                                               | Error text mentions `.openai/hosting.json`                                                | **Cosmetic** (unused by app routes)                                                                                                     |
+| `cloudflare-env.d.ts`                                                       | `DB` / unused `BUCKET`                                                                    | **Replaceable** — keep `DB` for Option 2                                                                                                |
+| `lib/documents.ts`                                                          | Brief says “Use the Sites connector to build and host the demo”                           | **Cosmetic/docs** — customer demos may still use Sites; control-plane hosting is separate                                               |
+| `README.md`                                                                 | Sites lifecycle, SIWC headers, local mock                                                 | **Cosmetic/docs**                                                                                                                       |
+| `docs/MVP.md`, `docs/DEVELOPMENT.md`, `AGENTS.md`                           | Sites publish rules, project ids, trusted-header warning                                  | **Cosmetic/docs** after cutover; keep warnings until decommission                                                                       |
+| `package.json` name `site-creator-vinext-starter`                           | Starter identity                                                                          | **Cosmetic**                                                                                                                            |
+| `app/layout.tsx` `codex-preview` metadata                                   | Codex preview hint                                                                        | **Cosmetic**                                                                                                                            |
+| Reserved paths `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback` | Dispatch-owned on Sites; must not be reimplemented as trusted auth on the public internet | **Blocking** if copied to a public Worker                                                                                               |
 
 ---
 
@@ -544,19 +543,19 @@ node tests/discovery-flow.mjs   # if discovery flag on locally
 
 ### Additional staging tests (new host)
 
-| Gate | Pass condition |
-| --- | --- |
-| Anonymous owner API | `GET /api/sessions` without cookie → 401; wrong email → 403 |
-| Header forgery | `oai-authenticated-user-id` + email on a public request must **not** grant owner |
-| Invitation isolation | Bearer A cannot read session B; demo `id` query must match bearer session |
-| Origin | Browser POST with foreign `Origin` → 403 |
-| Revision | Stale `revision` → 409; draft remains in the client |
-| Approval lock | New demo version clears `approvedDemoId`; stale `demoId` feedback → 409 |
-| Document gates | Build brief only after discovery complete; deployment only if latest demo approved |
-| Bundled demos | `/demo/{id}#token` loads; save/reload; conflict on stale demo revision |
+| Gate                   | Pass condition                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| Anonymous owner API    | `GET /api/sessions` without cookie → 401; wrong email → 403                                 |
+| Header forgery         | `oai-authenticated-user-id` + email on a public request must **not** grant owner            |
+| Invitation isolation   | Bearer A cannot read session B; demo `id` query must match bearer session                   |
+| Origin                 | Browser POST with foreign `Origin` → 403                                                    |
+| Revision               | Stale `revision` → 409; draft remains in the client                                         |
+| Approval lock          | New demo version clears `approvedDemoId`; stale `demoId` feedback → 409                     |
+| Document gates         | Build brief only after discovery complete; deployment only if latest demo approved          |
+| Bundled demos          | `/demo/{id}#token` loads; save/reload; conflict on stale demo revision                      |
 | Discovery (if enabled) | Client cannot hit owner discovery routes; $1/40-attempt limits; flag off → form still works |
-| Import | Re-import of the same Telegram triple does not duplicate ids |
-| Clerk cookie | Sign-in on staging origin; after hostname change, re-sign-in required |
+| Import                 | Re-import of the same Telegram triple does not duplicate ids                                |
+| Clerk cookie           | Sign-in on staging origin; after hostname change, re-sign-in required                       |
 
 Browser/microphone coverage is still not implied by API or build success.
 

@@ -10,12 +10,12 @@ The legacy Sites workspace contains Stolarz, PC-Market and Dental sessions impor
 
 The complete loop is: invite → discovery → build context → demo → version-specific feedback → revision → approval → deployment document. The final document is guidance; it does not itself deploy a customer product.
 
-| Person | Current actions |
-| --- | --- |
-| Operator | Create sessions, share/revoke links, review evidence, export briefs, attach demo versions, read feedback and export an approved handoff |
-| New client | Open their private link, use the guided form or opt-in chat, later try the demo and leave notes or a decision |
-| Existing Telegram friend | Open their private link and try the already-linked demo, then submit notes, request changes or approve |
-| Developer | Work from the exported brief, validate a build, return its URL/version to Mirai |
+| Person                   | Current actions                                                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Operator                 | Create sessions, share/revoke links, review evidence, export briefs, attach demo versions, read feedback and export an approved handoff |
+| New client               | Open their private link, use the guided form or opt-in chat, later try the demo and leave notes or a decision                           |
+| Existing Telegram friend | Open their private link and try the already-linked demo, then submit notes, request changes or approve                                  |
+| Developer                | Work from the exported brief, validate a build, return its URL/version to Mirai                                                         |
 
 ## Operator journey
 

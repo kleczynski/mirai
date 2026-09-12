@@ -1,15 +1,257 @@
-'use client';
-import { useEffect,useRef,useState } from 'react';
-import { Mic,Square,FileText,Download,Check } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { structureNote,type DentalInput } from '@/lib/demo-engine';
-import { downloadFile } from '../workbench';
-import { toast } from 'sonner';
-type Recognition={lang:string;continuous:boolean;interimResults:boolean;onresult:((event:{results:{isFinal:boolean;0:{transcript:string}}[];resultIndex:number})=>void)|null;onerror:((event:{error:string})=>void)|null;onend:(()=>void)|null;start:()=>void;stop:()=>void;abort:()=>void};
-export default function DentalDemo({value,onChange}:{value:DentalInput;onChange:(v:DentalInput)=>void}){
- const [supported,setSupported]=useState(false),[listening,setListening]=useState(false),[permission,setPermission]=useState(false);const recognition=useRef<Recognition|null>(null);const latest=useRef(value);latest.current=value;const currentChange=useRef(onChange);currentChange.current=onChange;
- useEffect(()=>{const w=window as unknown as {SpeechRecognition?:new()=>Recognition;webkitSpeechRecognition?:new()=>Recognition};setSupported(!!(w.SpeechRecognition||w.webkitSpeechRecognition));return()=>recognition.current?.abort();},[]);
- const teeth=(()=>{try{return structureNote(value.transcript).teeth;}catch{return [];}})();
- const dictation=()=>{if(listening){recognition.current?.stop();return;}const w=window as unknown as {SpeechRecognition?:new()=>Recognition;webkitSpeechRecognition?:new()=>Recognition};const Constructor=w.SpeechRecognition||w.webkitSpeechRecognition;if(!Constructor)return;const r=new Constructor();recognition.current=r;r.lang='pl-PL';r.continuous=true;r.interimResults=false;r.onresult=e=>{let text='';for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)text+=' '+e.results[i][0].transcript;currentChange.current({...latest.current,transcript:(latest.current.transcript+text).slice(0,12000),reviewed:false});};r.onerror=e=>{setListening(false);toast.error(`Dyktowanie niedostępne (${e.error}). Wpisz tekst ręcznie.`);};r.onend=()=>setListening(false);try{r.start();setListening(true);}catch{toast.error('Nie można uruchomić mikrofonu. Wpisz tekst ręcznie.');}};
- return <div className="dental-layout"><section className="demo-panel"><div className="section-heading"><h2>1. Podsumowanie wizyty</h2><span className="demo-badge">Dane fikcyjne</span></div><p className="helper">Opisz własnymi słowami wykonaną pracę. Numery zębów podawaj np. „ząb 16”. Ten prototyp nie diagnozuje i nie dopisuje brakujących informacji.</p><label className="editor-label" htmlFor="transcript">Tekst źródłowy</label><textarea id="transcript" className="clinical-text" rows={10} value={value.transcript} maxLength={12000} onChange={e=>onChange({...value,transcript:e.target.value,reviewed:false})}/><div className="dictation-controls">{supported?<><label className="check-label"><Checkbox checked={permission} onCheckedChange={v=>setPermission(v===true)}/>Używam fikcyjnego przykładu. Rozpoznawanie mowy może wysłać dźwięk do dostawcy przeglądarki.</label><button className="button secondary" disabled={!permission&&!listening} onClick={dictation}>{listening?<Square size={16}/>:<Mic size={16}/>} {listening?'Zatrzymaj dyktowanie':'Dyktuj po polsku'}</button><span className="meta" role="status">{listening?'Słucham…': 'Dyktowanie zależy od obsługi przeglądarki.'}</span></>:<p className="meta">Ta przeglądarka nie obsługuje dyktowania. Wpisz lub wklej tekst powyżej — cały dalszy proces działa bez mikrofonu.</p>}</div><button className="button full" disabled={value.transcript.trim().length<10||listening} onClick={()=>{try{onChange({...value,...{note:structureNote(value.transcript).note},reviewed:false});toast.success('Utworzono szkic do sprawdzenia');}catch(e){toast.error((e as Error).message);}}}><FileText size={17}/>{value.note?'Utwórz nowy szkic z tekstu':'Utwórz szkic notatki'}</button>{value.note&&<p className="meta helper">Nowy szkic zastąpi edytowaną notatkę. Zapisz lub pobierz obecną wersję przed ponownym wygenerowaniem.</p>}</section><section className="demo-panel clinical-review"><div className="section-heading"><h2>2. Sprawdź i popraw</h2><span className="meta">Decyzja należy do lekarza</span></div><div className="teeth-panel"><h3>Numery wykryte w tekście źródłowym</h3><div className="tooth-row">{[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28].map(n=><span key={n} className={teeth.includes(String(n))?'tooth active':'tooth'}>{n}</span>)}</div><div className="tooth-row">{[48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38].map(n=><span key={n} className={teeth.includes(String(n))?'tooth active':'tooth'}>{n}</span>)}</div><p className="meta">{teeth.length?`Wskazania do sprawdzenia: ${teeth.join(', ')}`:'Brak rozpoznanych numerów.'} To indeks tekstu, nie rozpoznanie ani diagram leczenia.</p></div><label className="editor-label" htmlFor="clinical-note">Edytowalny szkic</label><textarea id="clinical-note" className="clinical-text" rows={12} value={value.note} maxLength={15000} placeholder="Szkic pojawi się tutaj po użyciu przycisku po lewej." onChange={e=>onChange({...value,note:e.target.value,reviewed:false})}/><label className="check-label approval-confirm"><Checkbox disabled={!value.note.trim()} checked={value.reviewed} onCheckedChange={v=>onChange({...value,reviewed:v===true})}/>Sprawdziłem treść, numery zębów i uzupełniłem brakujące informacje.</label><button className="button secondary full" disabled={!value.reviewed||!value.note.trim()} onClick={()=>downloadFile('notatka-do-przeniesienia.txt',value.note)}><Download size={16}/>Pobierz sprawdzoną notatkę</button><p className="meta helper"><Check size={13}/>Eksport tekstowy. Przeniesienie do Prodentis pozostaje ręczne. Nie przypisujemy kodów NFZ.</p></section></div>;
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { Mic, Square, FileText, Download, Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { structureNote, type DentalInput } from "@/lib/demo-engine";
+import { downloadFile } from "../workbench";
+import { toast } from "sonner";
+type Recognition = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult:
+    | ((event: {
+        results: { isFinal: boolean; 0: { transcript: string } }[];
+        resultIndex: number;
+      }) => void)
+    | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
+export default function DentalDemo({
+  value,
+  onChange,
+}: {
+  value: DentalInput;
+  onChange: (v: DentalInput) => void;
+}) {
+  const [supported, setSupported] = useState(false),
+    [listening, setListening] = useState(false),
+    [permission, setPermission] = useState(false);
+  const recognition = useRef<Recognition | null>(null);
+  const latest = useRef(value);
+  latest.current = value;
+  const currentChange = useRef(onChange);
+  currentChange.current = onChange;
+  useEffect(() => {
+    const w = window as unknown as {
+      SpeechRecognition?: new () => Recognition;
+      webkitSpeechRecognition?: new () => Recognition;
+    };
+    setSupported(!!(w.SpeechRecognition || w.webkitSpeechRecognition));
+    return () => recognition.current?.abort();
+  }, []);
+  const teeth = (() => {
+    try {
+      return structureNote(value.transcript).teeth;
+    } catch {
+      return [];
+    }
+  })();
+  const dictation = () => {
+    if (listening) {
+      recognition.current?.stop();
+      return;
+    }
+    const w = window as unknown as {
+      SpeechRecognition?: new () => Recognition;
+      webkitSpeechRecognition?: new () => Recognition;
+    };
+    const Constructor = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!Constructor) return;
+    const r = new Constructor();
+    recognition.current = r;
+    r.lang = "pl-PL";
+    r.continuous = true;
+    r.interimResults = false;
+    r.onresult = (e) => {
+      let text = "";
+      for (let i = e.resultIndex; i < e.results.length; i++)
+        if (e.results[i].isFinal) text += " " + e.results[i][0].transcript;
+      currentChange.current({
+        ...latest.current,
+        transcript: (latest.current.transcript + text).slice(0, 12000),
+        reviewed: false,
+      });
+    };
+    r.onerror = (e) => {
+      setListening(false);
+      toast.error(`Dyktowanie niedostępne (${e.error}). Wpisz tekst ręcznie.`);
+    };
+    r.onend = () => setListening(false);
+    try {
+      r.start();
+      setListening(true);
+    } catch {
+      toast.error("Nie można uruchomić mikrofonu. Wpisz tekst ręcznie.");
+    }
+  };
+  return (
+    <div className="dental-layout">
+      <section className="demo-panel">
+        <div className="section-heading">
+          <h2>1. Podsumowanie wizyty</h2>
+          <span className="demo-badge">Dane fikcyjne</span>
+        </div>
+        <p className="helper">
+          Opisz własnymi słowami wykonaną pracę. Numery zębów podawaj np. „ząb 16”. Ten
+          prototyp nie diagnozuje i nie dopisuje brakujących informacji.
+        </p>
+        <label
+          className="editor-label"
+          htmlFor="transcript"
+        >
+          Tekst źródłowy
+        </label>
+        <textarea
+          id="transcript"
+          className="clinical-text"
+          rows={10}
+          value={value.transcript}
+          maxLength={12000}
+          onChange={(e) =>
+            onChange({ ...value, transcript: e.target.value, reviewed: false })
+          }
+        />
+        <div className="dictation-controls">
+          {supported ? (
+            <>
+              <label className="check-label">
+                <Checkbox
+                  checked={permission}
+                  onCheckedChange={(v) => setPermission(v === true)}
+                />
+                Używam fikcyjnego przykładu. Rozpoznawanie mowy może wysłać dźwięk do
+                dostawcy przeglądarki.
+              </label>
+              <button
+                className="button secondary"
+                disabled={!permission && !listening}
+                onClick={dictation}
+              >
+                {listening ? <Square size={16} /> : <Mic size={16} />}{" "}
+                {listening ? "Zatrzymaj dyktowanie" : "Dyktuj po polsku"}
+              </button>
+              <span
+                className="meta"
+                role="status"
+              >
+                {listening ? "Słucham…" : "Dyktowanie zależy od obsługi przeglądarki."}
+              </span>
+            </>
+          ) : (
+            <p className="meta">
+              Ta przeglądarka nie obsługuje dyktowania. Wpisz lub wklej tekst powyżej —
+              cały dalszy proces działa bez mikrofonu.
+            </p>
+          )}
+        </div>
+        <button
+          className="button full"
+          disabled={value.transcript.trim().length < 10 || listening}
+          onClick={() => {
+            try {
+              onChange({
+                ...value,
+                ...{ note: structureNote(value.transcript).note },
+                reviewed: false,
+              });
+              toast.success("Utworzono szkic do sprawdzenia");
+            } catch (e) {
+              toast.error((e as Error).message);
+            }
+          }}
+        >
+          <FileText size={17} />
+          {value.note ? "Utwórz nowy szkic z tekstu" : "Utwórz szkic notatki"}
+        </button>
+        {value.note && (
+          <p className="meta helper">
+            Nowy szkic zastąpi edytowaną notatkę. Zapisz lub pobierz obecną wersję przed
+            ponownym wygenerowaniem.
+          </p>
+        )}
+      </section>
+      <section className="demo-panel clinical-review">
+        <div className="section-heading">
+          <h2>2. Sprawdź i popraw</h2>
+          <span className="meta">Decyzja należy do lekarza</span>
+        </div>
+        <div className="teeth-panel">
+          <h3>Numery wykryte w tekście źródłowym</h3>
+          <div className="tooth-row">
+            {[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28].map(
+              (n) => (
+                <span
+                  key={n}
+                  className={teeth.includes(String(n)) ? "tooth active" : "tooth"}
+                >
+                  {n}
+                </span>
+              ),
+            )}
+          </div>
+          <div className="tooth-row">
+            {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map(
+              (n) => (
+                <span
+                  key={n}
+                  className={teeth.includes(String(n)) ? "tooth active" : "tooth"}
+                >
+                  {n}
+                </span>
+              ),
+            )}
+          </div>
+          <p className="meta">
+            {teeth.length
+              ? `Wskazania do sprawdzenia: ${teeth.join(", ")}`
+              : "Brak rozpoznanych numerów."}{" "}
+            To indeks tekstu, nie rozpoznanie ani diagram leczenia.
+          </p>
+        </div>
+        <label
+          className="editor-label"
+          htmlFor="clinical-note"
+        >
+          Edytowalny szkic
+        </label>
+        <textarea
+          id="clinical-note"
+          className="clinical-text"
+          rows={12}
+          value={value.note}
+          maxLength={15000}
+          placeholder="Szkic pojawi się tutaj po użyciu przycisku po lewej."
+          onChange={(e) =>
+            onChange({ ...value, note: e.target.value, reviewed: false })
+          }
+        />
+        <label className="check-label approval-confirm">
+          <Checkbox
+            disabled={!value.note.trim()}
+            checked={value.reviewed}
+            onCheckedChange={(v) => onChange({ ...value, reviewed: v === true })}
+          />
+          Sprawdziłem treść, numery zębów i uzupełniłem brakujące informacje.
+        </label>
+        <button
+          className="button secondary full"
+          disabled={!value.reviewed || !value.note.trim()}
+          onClick={() => downloadFile("notatka-do-przeniesienia.txt", value.note)}
+        >
+          <Download size={16} />
+          Pobierz sprawdzoną notatkę
+        </button>
+        <p className="meta helper">
+          <Check size={13} />
+          Eksport tekstowy. Przeniesienie do Prodentis pozostaje ręczne. Nie
+          przypisujemy kodów NFZ.
+        </p>
+      </section>
+    </div>
+  );
 }

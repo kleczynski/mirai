@@ -6,13 +6,13 @@ Always inspect live configuration before the next release; these observations ar
 
 ## Current environments
 
-| Environment | URL / Worker | D1 database | Authentication |
-| --- | --- | --- | --- |
-| Production | https://mirai.party → `mirai-production` | `26c4ce49-e459-4e94-be18-593b3f633c98` | Production Clerk |
-| Production Worker address | https://mirai-production.kleczynski11312.workers.dev | Same production D1 | Production Clerk |
-| Staging | https://mirai-staging.kleczynski11312.workers.dev → `mirai-staging` | `7fece159-c3e2-4394-953d-60679fb92b33` | Development Clerk |
-| Legacy Sites | https://mirai-control-plane.wishfishdev.chatgpt.site | Separate legacy Sites D1 | Its existing authentication |
-| Local | http://localhost:5173 | `.wrangler/state` only | Clerk, or loopback mock when its secret is unset |
+| Environment               | URL / Worker                                                        | D1 database                            | Authentication                                   |
+| ------------------------- | ------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------ |
+| Production                | https://mirai.party → `mirai-production`                            | `26c4ce49-e459-4e94-be18-593b3f633c98` | Production Clerk                                 |
+| Production Worker address | https://mirai-production.kleczynski11312.workers.dev                | Same production D1                     | Production Clerk                                 |
+| Staging                   | https://mirai-staging.kleczynski11312.workers.dev → `mirai-staging` | `7fece159-c3e2-4394-953d-60679fb92b33` | Development Clerk                                |
+| Legacy Sites              | https://mirai-control-plane.wishfishdev.chatgpt.site                | Separate legacy Sites D1               | Its existing authentication                      |
+| Local                     | http://localhost:5173                                               | `.wrangler/state` only                 | Clerk, or loopback mock when its secret is unset |
 
 The Cloudflare account is `61c83af95d6ce17e198b3d60268ef6df`. Both Workers bind
 D1 as `DB`. Production routing is dashboard-managed. The Cloudflare domains API
@@ -45,10 +45,10 @@ of the published commit reproduces their appearance. A private local Git bundle
 in `outputs/discovery-deployed-source.bundle` preserves the exact deployed snapshot;
 do not upload ignored outputs wholesale.
 
-| Target | Application upload | Final active version after runtime settings |
-| --- | --- | --- |
-| Staging | `6ac7fec8-0153-450f-a704-1c3a4804ac30` | `6973ee8e-e47e-4c2c-a806-bfe08409d109` |
-| Production | `4a244ab6-227a-4a0e-88d5-c6bdb13fad59` | `6e1209a0-c17f-4c29-bbe1-b4651f31fa1f` |
+| Target     | Application upload                     | Final active version after runtime settings |
+| ---------- | -------------------------------------- | ------------------------------------------- |
+| Staging    | `6ac7fec8-0153-450f-a704-1c3a4804ac30` | `6973ee8e-e47e-4c2c-a806-bfe08409d109`      |
+| Production | `4a244ab6-227a-4a0e-88d5-c6bdb13fad59` | `6e1209a0-c17f-4c29-bbe1-b4651f31fa1f`      |
 
 Production's preceding version was `f11fdba9-2088-4f41-9410-85ac5c1a1248`.
 Before release, production contained five sessions, no demos and no approved
@@ -66,16 +66,16 @@ request ledgers remain for accounting. Do not delete the ledger to reset spendin
 
 Both current Workers use these server-side runtime settings:
 
-| Setting | Value / handling |
-| --- | --- |
-| `MIRAI_DISCOVERY_ENABLED` | `true` |
-| `MIRAI_DISCOVERY_MODEL` | `gpt-5.6-terra` only; low reasoning; no automatic fallback |
-| `MIRAI_DISCOVERY_SESSION_CAP_USD` | `0.25` |
-| `MIRAI_DISCOVERY_WORKSPACE_CAP_USD` | `1` |
-| `MIRAI_OPENAI_API_KEY` | Secret; staging configured explicitly, existing production secret preserved |
-| `CLERK_SECRET_KEY` | Separate development/production secrets; preserved |
-| `MIRAI_OWNER_EMAIL` | Existing operator allowlist; preserved |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Matching Clerk instance, inlined at build time |
+| Setting                             | Value / handling                                                            |
+| ----------------------------------- | --------------------------------------------------------------------------- |
+| `MIRAI_DISCOVERY_ENABLED`           | `true`                                                                      |
+| `MIRAI_DISCOVERY_MODEL`             | `gpt-5.6-terra` only; low reasoning; no automatic fallback                  |
+| `MIRAI_DISCOVERY_SESSION_CAP_USD`   | `0.25`                                                                      |
+| `MIRAI_DISCOVERY_WORKSPACE_CAP_USD` | `1`                                                                         |
+| `MIRAI_OPENAI_API_KEY`              | Secret; staging configured explicitly, existing production secret preserved |
+| `CLERK_SECRET_KEY`                  | Separate development/production secrets; preserved                          |
+| `MIRAI_OWNER_EMAIL`                 | Existing operator allowlist; preserved                                      |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Matching Clerk instance, inlined at build time                              |
 
 The workspace cap is lifetime accounting across all sessions in one D1 database.
 Production's pre-release accounted usage was $0.130917, already included in its

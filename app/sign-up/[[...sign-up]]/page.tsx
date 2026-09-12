@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import "../../auth.css";
 import { MiraiSignUp } from "../../clerk-provider";
 

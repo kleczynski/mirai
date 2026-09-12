@@ -5,7 +5,9 @@ import path from "node:path";
 const root = path.resolve(process.argv[2] ?? ".");
 const forbiddenArguments = new Set(["--deploy", "--remote"]);
 if (process.argv.some((argument) => forbiddenArguments.has(argument))) {
-  throw new Error("This command only prepares a local config; it never deploys or accesses remote resources.");
+  throw new Error(
+    "This command only prepares a local config; it never deploys or accesses remote resources.",
+  );
 }
 
 const localEnvironmentFiles = readdirSync(root).filter(
@@ -15,7 +17,9 @@ const localEnvironmentFiles = readdirSync(root).filter(
     (name.startsWith(".env.") && name !== ".env.example"),
 );
 if (localEnvironmentFiles.length > 0) {
-  throw new Error("Production preparation requires an isolated source archive without local environment files.");
+  throw new Error(
+    "Production preparation requires an isolated source archive without local environment files.",
+  );
 }
 
 const bindings = JSON.parse(
@@ -37,12 +41,17 @@ if (
 }
 
 if ("route" in bindings || "routes" in bindings) {
-  throw new Error("Production routes stay dashboard-managed; deploy bindings must not override them.");
+  throw new Error(
+    "Production routes stay dashboard-managed; deploy bindings must not override them.",
+  );
 }
 
 const assets = path.join(root, "dist/client/_next/static/chunks");
-const providers = readdirSync(assets).filter((name) => /^clerk-provider-.*\.js$/.test(name));
-if (providers.length !== 1) throw new Error("Expected exactly one Clerk provider chunk.");
+const providers = readdirSync(assets).filter((name) =>
+  /^clerk-provider-.*\.js$/.test(name),
+);
+if (providers.length !== 1)
+  throw new Error("Expected exactly one Clerk provider chunk.");
 const chunk = readFileSync(path.join(assets, providers[0]), "utf8");
 const keys = chunk.match(/pk_(?:live|test)_[A-Za-z0-9]+/g) ?? [];
 if (keys.length !== 1 || !keys[0].startsWith("pk_live_")) {

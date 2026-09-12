@@ -36,6 +36,9 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      - name: Check formatting
+        run: npm run fmt:check
+
       - name: Lint
         run: npm run lint
 

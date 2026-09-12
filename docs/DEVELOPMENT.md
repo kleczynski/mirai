@@ -6,19 +6,19 @@ Updated after the 2026-09-11 release. Any editor and terminal can edit and run t
 
 React 19, TypeScript, Vinext/Vite, Tailwind and shared UI components run on a Cloudflare Worker. Drizzle defines the SQLite schema; server routes use D1 prepared statements. The current lockfile is the dependency source of truth.
 
-| Area | Files |
-| --- | --- |
-| Operator workspace | app/workspace.tsx, app/source-history.tsx, app/discovery-observer.tsx |
-| Private client journey | app/s/session.tsx, app/s/discovery-client.tsx |
+| Area                                        | Files                                                                                        |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Operator workspace                          | app/workspace.tsx, app/source-history.tsx, app/discovery-observer.tsx                        |
+| Private client journey                      | app/s/session.tsx, app/s/discovery-client.tsx                                                |
 | Sessions, discovery and version transitions | app/api/sessions/, app/api/client/, lib/model.ts, lib/discovery.ts, lib/discovery-service.ts |
-| Authentication and persistence | lib/server.ts, app/chatgpt-auth.ts, db/schema.ts |
-| Evidence documents | lib/documents.ts, app/api/documents/ |
-| Telegram import | app/api/import/route.ts |
-| Three demo interfaces | app/demo/components/, app/demo/workbench.tsx |
-| Demo calculations and validation | lib/demo-engine.ts |
-| Saved demo state | app/api/demo/route.ts, demo_states table |
-| Browser agent tools | lib/webmcp.ts, lib/demo-webmcp.ts |
-| Local runtime and hosting declaration | vite.config.ts, scripts/, .openai/hosting.json |
+| Authentication and persistence              | lib/server.ts, app/chatgpt-auth.ts, db/schema.ts                                             |
+| Evidence documents                          | lib/documents.ts, app/api/documents/                                                         |
+| Telegram import                             | app/api/import/route.ts                                                                      |
+| Three demo interfaces                       | app/demo/components/, app/demo/workbench.tsx                                                 |
+| Demo calculations and validation            | lib/demo-engine.ts                                                                           |
+| Saved demo state                            | app/api/demo/route.ts, demo_states table                                                     |
+| Browser agent tools                         | lib/webmcp.ts, lib/demo-webmcp.ts                                                            |
+| Local runtime and hosting declaration       | vite.config.ts, scripts/, .openai/hosting.json                                               |
 
 ## Run locally from a clean checkout
 
@@ -205,24 +205,24 @@ identity. Chat is enabled on both current Workers; client evidence still require
 The operator’s lifecycle gate is partly automated locally. No fixture-writing script
 should be pointed at `https://mirai.party`. None of these default scripts target production or staging.
 
-| Operator check | Automated? | Where |
-| --- | --- | --- |
-| Anonymous `/api/sessions` is 401 | Yes | `tests/session-flow.mjs`, `tests/lifecycle-smoke.mjs` |
-| Create session returns one invite token | Yes | same; tokens are not printed by the lifecycle smoke beyond the existing session-flow return value used in-process |
-| Client bearer sees the session, not an owner list | Yes | `tests/lifecycle-smoke.mjs` |
-| Invite rotation: old 404, new 200 | Yes | both HTTP suites |
-| Revoke → 404 | Yes | both HTTP suites |
-| Eight fictional answers → Ready to build | Yes | both HTTP suites |
-| Incomplete attach stays 400 / same stage | Yes | `tests/lifecycle-smoke.mjs`; unit cases in `tests/attach-demo-blockers.mjs` |
-| Attach `https://example.com/test-try` → Demo review, not bundled | Yes | `tests/lifecycle-smoke.mjs` |
-| Note + approval on current demo; second attach clears approval; stale demoId is 409 | Yes | both HTTP suites |
-| `/test-try` on the local origin is 404 | Yes | `tests/client-journey-browser.mjs` (Playwright) |
-| Signed-out `/s#token` is the client page, not the workspace | Yes | Playwright smoke |
-| Share this version disabled + blocker list until URL/summary/checks pass | Yes | Playwright smoke + `attachDemoBlockers` unit test |
-| Clerk sign-in on `mirai.party` | Still human | production Clerk cookie |
-| Empty-list visual on a fresh production workspace | Still human | visual only |
-| Private-window cookie isolation | Still human | browser cookie jars |
-| Copying a live invite without leaking the token | Still human | operator clipboard |
+| Operator check                                                                      | Automated?  | Where                                                                                                             |
+| ----------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| Anonymous `/api/sessions` is 401                                                    | Yes         | `tests/session-flow.mjs`, `tests/lifecycle-smoke.mjs`                                                             |
+| Create session returns one invite token                                             | Yes         | same; tokens are not printed by the lifecycle smoke beyond the existing session-flow return value used in-process |
+| Client bearer sees the session, not an owner list                                   | Yes         | `tests/lifecycle-smoke.mjs`                                                                                       |
+| Invite rotation: old 404, new 200                                                   | Yes         | both HTTP suites                                                                                                  |
+| Revoke → 404                                                                        | Yes         | both HTTP suites                                                                                                  |
+| Eight fictional answers → Ready to build                                            | Yes         | both HTTP suites                                                                                                  |
+| Incomplete attach stays 400 / same stage                                            | Yes         | `tests/lifecycle-smoke.mjs`; unit cases in `tests/attach-demo-blockers.mjs`                                       |
+| Attach `https://example.com/test-try` → Demo review, not bundled                    | Yes         | `tests/lifecycle-smoke.mjs`                                                                                       |
+| Note + approval on current demo; second attach clears approval; stale demoId is 409 | Yes         | both HTTP suites                                                                                                  |
+| `/test-try` on the local origin is 404                                              | Yes         | `tests/client-journey-browser.mjs` (Playwright)                                                                   |
+| Signed-out `/s#token` is the client page, not the workspace                         | Yes         | Playwright smoke                                                                                                  |
+| Share this version disabled + blocker list until URL/summary/checks pass            | Yes         | Playwright smoke + `attachDemoBlockers` unit test                                                                 |
+| Clerk sign-in on `mirai.party`                                                      | Still human | production Clerk cookie                                                                                           |
+| Empty-list visual on a fresh production workspace                                   | Still human | visual only                                                                                                       |
+| Private-window cookie isolation                                                     | Still human | browser cookie jars                                                                                               |
+| Copying a live invite without leaking the token                                     | Still human | operator clipboard                                                                                                |
 
 An optional operator-only script, `node scripts/live-smoke.mjs`, refuses to run
 unless `MIRAI_LIVE_SMOKE=I_UNDERSTAND` **and** an explicit

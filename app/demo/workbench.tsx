@@ -1,26 +1,274 @@
-'use client';
-import { useCallback,useEffect,useRef,useState } from 'react';
-import { ArrowLeft,Save,RotateCw,MessageSquare,Check,FlaskConical } from 'lucide-react';
-import { Toaster,toast } from 'sonner';
-import { api,Brand } from '@/app/workspace';
-import type { CutInput,RetailInput,DentalInput } from '@/lib/demo-engine';
-import CuttingDemo from './components/cutting';
-import RetailDemo from './components/retail';
-import DentalDemo from './components/dental';
-import './demo.css';
-import { registerDemoTools } from '@/lib/demo-webmcp';
-export type DemoState=CutInput|RetailInput|DentalInput;
-type Loaded={title:string;template:'carpenter'|'retail'|'dental';demoId:string;version:number;state:DemoState;revision:number;updatedAt:string|null};
-export function downloadFile(name:string,content:string,type='text/plain;charset=utf-8'){const u=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
-export default function DemoWorkbench({id}:{id:string}){
- const [record,setRecord]=useState<Loaded|null>(null),[state,setState]=useState<DemoState|null>(null),[token,setToken]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[dirty,setDirty]=useState(false),[loading,setLoading]=useState(true);
- const load=useCallback(async(t:string)=>{try{const data=await api<Loaded>(`/api/demo?id=${id}`,'GET',undefined,t||undefined);setRecord(data);setState(data.state);setDirty(false);setError('');}catch(e){setError((e as Error).message);}finally{setLoading(false);}},[id]);
- useEffect(()=>{const t=location.hash.slice(1);setToken(t);void load(t);},[load]);
- useEffect(()=>{if(!dirty)return;const onLeave=(e:BeforeUnloadEvent)=>e.preventDefault();window.addEventListener('beforeunload',onLeave);return()=>window.removeEventListener('beforeunload',onLeave);},[dirty]);
- const currentState=useRef(state);currentState.current=state;
- const update=(s:DemoState)=>{currentState.current=s;setState(s);setDirty(true);};
- const save=async()=>{if(!record||!state)throw new Error('Demo nie jest jeszcze wczytane.');if(busy)throw new Error('Trwa zapis.');const savingState=state;setBusy(true);try{const saved=await api<{revision:number;updatedAt:string}>(`/api/demo?id=${id}`,'POST',{state,revision:record.revision},token||undefined);setRecord({...record,...saved});setDirty(currentState.current!==savingState);toast.success('Zapisano w tej sesji');return saved;}catch(e){toast.error((e as Error).message);throw e;}finally{setBusy(false);}};
- const actions=useRef({read:()=>({template:record?.template,state,dirty}),save});actions.current={read:()=>({template:record?.template,state,dirty}),save};
- useEffect(()=>registerDemoTools(()=>actions.current.read(),()=>actions.current.save()),[]);
- return <div className={`demo-page ${record?.template||''}`}><Toaster richColors/><header className="demo-header"><Brand/><span className="demo-badge"><FlaskConical size={15}/>Demo v{record?.version||1}</span><a href={token?`/s#${token}`:`/?session=${id}`} className="text-button"><ArrowLeft size={16}/>{token?'Powrót do rozmowy':'Powrót do sesji'}</a></header><main className="demo-main">{loading?<div className="panel quiet-empty" role="status">Wczytywanie demo…</div>:!record||!state?<section className="panel quiet-empty"><h1>To demo wymaga dostępu</h1><p role="alert">{error}</p>{!token&&<a href={`/sign-in?redirect_url=${encodeURIComponent('/demo/'+id)}`} className="button">Zaloguj się jako operator</a>}<button className="button secondary" onClick={()=>load(token)}>Spróbuj ponownie</button></section>:<><div className="demo-title"><div><span className="client-kicker">{record.template==='carpenter'?'Stolarz / pracownia rozkroju':record.template==='retail'?'PC-Market / asystent zamówień':'Dental / notatka z wizyty'}</span><h1>{record.template==='carpenter'?'Od wymiarów do rozkroju.':record.template==='retail'?'Zacznij od tego, co jest na półce.':'Mniej przepisywania. Więcej kontroli.'}</h1></div><div className="save-actions"><span className="meta" role="status">{dirty?'Niezapisane zmiany':record.updatedAt?`Zapisano ${new Date(record.updatedAt).toLocaleTimeString('pl')}`:'Przykład — jeszcze niezapisany'}</span><button className="button" disabled={busy} onClick={()=>{void save().catch(()=>{});}}><Save size={16}/>{busy?'Zapisywanie…':'Zapisz projekt'}</button></div></div><div className="demo-disclosure"><FlaskConical size={17}/><p>{record.template==='carpenter'?'Obliczenia działają na Twoich wymiarach. Dane startowe są fikcyjne. Układ jest heurystyką, nie gwarancją najlepszego rozkroju. Sprawdź plan przed cięciem.':record.template==='retail'?'Ceny i produkty startowe są fikcyjne. Obliczenia, import CSV i eksport zamówienia działają. Brak połączenia z bazą PC-Market lub hurtowniami.':'Wyłącznie fikcyjne dane. Szkic zachowuje podany tekst i wyszukuje numery zębów; nie rozpoznaje chorób ani nie dobiera leczenia. Brak połączenia z Prodentis.'}</p></div><div className="demo-toolbar"><span><Check size={15}/>Zmiany zapisujesz do tej sesji</span><button className="text-button" disabled={dirty||busy} title={dirty?'Najpierw zapisz swoje zmiany.':undefined} onClick={()=>load(token)}><RotateCw size={14}/>Wczytaj zapis</button></div>{record.template==='carpenter'?<CuttingDemo value={state as CutInput} onChange={update}/>:record.template==='retail'?<RetailDemo value={state as RetailInput} onChange={update}/>:<DentalDemo value={state as DentalInput} onChange={update}/>}<footer className="demo-feedback"><div><MessageSquare size={23}/><div><strong>Co działa? Co zmienić?</strong><p>Uwagi zapiszesz przy tej wersji w swojej sesji.</p></div></div><a className="button secondary" href={token?`/s#${token}`:`/?session=${id}`}>{token?'Przekaż uwagi':'Otwórz sesję'}</a></footer></>}</main></div>;
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  Save,
+  RotateCw,
+  MessageSquare,
+  Check,
+  FlaskConical,
+} from "lucide-react";
+import { Toaster, toast } from "sonner";
+import { api, Brand } from "@/app/workspace";
+import type { CutInput, RetailInput, DentalInput } from "@/lib/demo-engine";
+import CuttingDemo from "./components/cutting";
+import RetailDemo from "./components/retail";
+import DentalDemo from "./components/dental";
+import "./demo.css";
+import { registerDemoTools } from "@/lib/demo-webmcp";
+export type DemoState = CutInput | RetailInput | DentalInput;
+type Loaded = {
+  title: string;
+  template: "carpenter" | "retail" | "dental";
+  demoId: string;
+  version: number;
+  state: DemoState;
+  revision: number;
+  updatedAt: string | null;
+};
+export function downloadFile(
+  name: string,
+  content: string,
+  type = "text/plain;charset=utf-8",
+) {
+  const u = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement("a");
+  a.href = u;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(u);
+}
+export default function DemoWorkbench({ id }: { id: string }) {
+  const [record, setRecord] = useState<Loaded | null>(null),
+    [state, setState] = useState<DemoState | null>(null),
+    [token, setToken] = useState(""),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [dirty, setDirty] = useState(false),
+    [loading, setLoading] = useState(true);
+  const load = useCallback(
+    async (t: string) => {
+      try {
+        const data = await api<Loaded>(
+          `/api/demo?id=${id}`,
+          "GET",
+          undefined,
+          t || undefined,
+        );
+        setRecord(data);
+        setState(data.state);
+        setDirty(false);
+        setError("");
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [id],
+  );
+  useEffect(() => {
+    const t = location.hash.slice(1);
+    setToken(t);
+    void load(t);
+  }, [load]);
+  useEffect(() => {
+    if (!dirty) return;
+    const onLeave = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [dirty]);
+  const currentState = useRef(state);
+  currentState.current = state;
+  const update = (s: DemoState) => {
+    currentState.current = s;
+    setState(s);
+    setDirty(true);
+  };
+  const save = async () => {
+    if (!record || !state) throw new Error("Demo nie jest jeszcze wczytane.");
+    if (busy) throw new Error("Trwa zapis.");
+    const savingState = state;
+    setBusy(true);
+    try {
+      const saved = await api<{ revision: number; updatedAt: string }>(
+        `/api/demo?id=${id}`,
+        "POST",
+        { state, revision: record.revision },
+        token || undefined,
+      );
+      setRecord({ ...record, ...saved });
+      setDirty(currentState.current !== savingState);
+      toast.success("Zapisano w tej sesji");
+      return saved;
+    } catch (e) {
+      toast.error((e as Error).message);
+      throw e;
+    } finally {
+      setBusy(false);
+    }
+  };
+  const actions = useRef({
+    read: () => ({ template: record?.template, state, dirty }),
+    save,
+  });
+  actions.current = {
+    read: () => ({ template: record?.template, state, dirty }),
+    save,
+  };
+  useEffect(
+    () =>
+      registerDemoTools(
+        () => actions.current.read(),
+        () => actions.current.save(),
+      ),
+    [],
+  );
+  return (
+    <div className={`demo-page ${record?.template || ""}`}>
+      <Toaster richColors />
+      <header className="demo-header">
+        <Brand />
+        <span className="demo-badge">
+          <FlaskConical size={15} />
+          Demo v{record?.version || 1}
+        </span>
+        <a
+          href={token ? `/s#${token}` : `/?session=${id}`}
+          className="text-button"
+        >
+          <ArrowLeft size={16} />
+          {token ? "Powrót do rozmowy" : "Powrót do sesji"}
+        </a>
+      </header>
+      <main className="demo-main">
+        {loading ? (
+          <div
+            className="panel quiet-empty"
+            role="status"
+          >
+            Wczytywanie demo…
+          </div>
+        ) : !record || !state ? (
+          <section className="panel quiet-empty">
+            <h1>To demo wymaga dostępu</h1>
+            <p role="alert">{error}</p>
+            {!token && (
+              <a
+                href={`/sign-in?redirect_url=${encodeURIComponent("/demo/" + id)}`}
+                className="button"
+              >
+                Zaloguj się jako operator
+              </a>
+            )}
+            <button
+              className="button secondary"
+              onClick={() => load(token)}
+            >
+              Spróbuj ponownie
+            </button>
+          </section>
+        ) : (
+          <>
+            <div className="demo-title">
+              <div>
+                <span className="client-kicker">
+                  {record.template === "carpenter"
+                    ? "Stolarz / pracownia rozkroju"
+                    : record.template === "retail"
+                      ? "PC-Market / asystent zamówień"
+                      : "Dental / notatka z wizyty"}
+                </span>
+                <h1>
+                  {record.template === "carpenter"
+                    ? "Od wymiarów do rozkroju."
+                    : record.template === "retail"
+                      ? "Zacznij od tego, co jest na półce."
+                      : "Mniej przepisywania. Więcej kontroli."}
+                </h1>
+              </div>
+              <div className="save-actions">
+                <span
+                  className="meta"
+                  role="status"
+                >
+                  {dirty
+                    ? "Niezapisane zmiany"
+                    : record.updatedAt
+                      ? `Zapisano ${new Date(record.updatedAt).toLocaleTimeString("pl")}`
+                      : "Przykład — jeszcze niezapisany"}
+                </span>
+                <button
+                  className="button"
+                  disabled={busy}
+                  onClick={() => {
+                    void save().catch(() => {});
+                  }}
+                >
+                  <Save size={16} />
+                  {busy ? "Zapisywanie…" : "Zapisz projekt"}
+                </button>
+              </div>
+            </div>
+            <div className="demo-disclosure">
+              <FlaskConical size={17} />
+              <p>
+                {record.template === "carpenter"
+                  ? "Obliczenia działają na Twoich wymiarach. Dane startowe są fikcyjne. Układ jest heurystyką, nie gwarancją najlepszego rozkroju. Sprawdź plan przed cięciem."
+                  : record.template === "retail"
+                    ? "Ceny i produkty startowe są fikcyjne. Obliczenia, import CSV i eksport zamówienia działają. Brak połączenia z bazą PC-Market lub hurtowniami."
+                    : "Wyłącznie fikcyjne dane. Szkic zachowuje podany tekst i wyszukuje numery zębów; nie rozpoznaje chorób ani nie dobiera leczenia. Brak połączenia z Prodentis."}
+              </p>
+            </div>
+            <div className="demo-toolbar">
+              <span>
+                <Check size={15} />
+                Zmiany zapisujesz do tej sesji
+              </span>
+              <button
+                className="text-button"
+                disabled={dirty || busy}
+                title={dirty ? "Najpierw zapisz swoje zmiany." : undefined}
+                onClick={() => load(token)}
+              >
+                <RotateCw size={14} />
+                Wczytaj zapis
+              </button>
+            </div>
+            {record.template === "carpenter" ? (
+              <CuttingDemo
+                value={state as CutInput}
+                onChange={update}
+              />
+            ) : record.template === "retail" ? (
+              <RetailDemo
+                value={state as RetailInput}
+                onChange={update}
+              />
+            ) : (
+              <DentalDemo
+                value={state as DentalInput}
+                onChange={update}
+              />
+            )}
+            <footer className="demo-feedback">
+              <div>
+                <MessageSquare size={23} />
+                <div>
+                  <strong>Co działa? Co zmienić?</strong>
+                  <p>Uwagi zapiszesz przy tej wersji w swojej sesji.</p>
+                </div>
+              </div>
+              <a
+                className="button secondary"
+                href={token ? `/s#${token}` : `/?session=${id}`}
+              >
+                {token ? "Przekaż uwagi" : "Otwórz sesję"}
+              </a>
+            </footer>
+          </>
+        )}
+      </main>
+    </div>
+  );
 }

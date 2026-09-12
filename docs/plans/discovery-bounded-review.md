@@ -31,19 +31,19 @@ Local implementation and checks on 2026-09-11. Nothing was deployed.
 
 ## Verification
 
-| Check | Result |
-| --- | --- |
-| `npx tsc --noEmit` | Passed |
-| `npm run lint` | Passed; four unrelated existing warnings |
-| Discovery unit/SQLite suite | Passed: golden conversations, repetition prevention, eight answers, early/explicit finish, multi-topic evidence, corrections, measurement/safety gaps, document injection/redaction, authorization, idempotency, concurrency, in-flight revoke/rotation/demo and hung provider |
-| Discovery local HTTP suite | Passed: finish/retry/topic review, bearer isolation, stale revisions, operator readiness, document gates and post-demo lock |
-| Local route boundary suite | Passed: stalled request body returned usable recovery in 9,516 ms; no provider call |
-| Existing session and lifecycle suites | Passed: invitation isolation/rotation/revocation and exact-version feedback/approval reset |
-| Import/demo lifecycle suite | Passed: fictional import idempotency, persistence, conflicts, evidence export and no fabricated approval |
-| Attach-demo blockers | Passed |
-| Discovery browser suite in installed Chrome | Passed: simulated session/provider/voice states, unsupported/denied/network/timeout recovery, editable transcript, cancellation, draft retention, idempotent retry, conflict, eight-answer review, locked/imported states and reduced motion |
-| Production build | Passed locally |
-| Documentation links and diff whitespace | Passed |
+| Check                                       | Result                                                                                                                                                                                                                                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npx tsc --noEmit`                          | Passed                                                                                                                                                                                                                                                                         |
+| `npm run lint`                              | Passed; four unrelated existing warnings                                                                                                                                                                                                                                       |
+| Discovery unit/SQLite suite                 | Passed: golden conversations, repetition prevention, eight answers, early/explicit finish, multi-topic evidence, corrections, measurement/safety gaps, document injection/redaction, authorization, idempotency, concurrency, in-flight revoke/rotation/demo and hung provider |
+| Discovery local HTTP suite                  | Passed: finish/retry/topic review, bearer isolation, stale revisions, operator readiness, document gates and post-demo lock                                                                                                                                                    |
+| Local route boundary suite                  | Passed: stalled request body returned usable recovery in 9,516 ms; no provider call                                                                                                                                                                                            |
+| Existing session and lifecycle suites       | Passed: invitation isolation/rotation/revocation and exact-version feedback/approval reset                                                                                                                                                                                     |
+| Import/demo lifecycle suite                 | Passed: fictional import idempotency, persistence, conflicts, evidence export and no fabricated approval                                                                                                                                                                       |
+| Attach-demo blockers                        | Passed                                                                                                                                                                                                                                                                         |
+| Discovery browser suite in installed Chrome | Passed: simulated session/provider/voice states, unsupported/denied/network/timeout recovery, editable transcript, cancellation, draft retention, idempotent retry, conflict, eight-answer review, locked/imported states and reduced motion                                   |
+| Production build                            | Passed locally                                                                                                                                                                                                                                                                 |
+| Documentation links and diff whitespace     | Passed                                                                                                                                                                                                                                                                         |
 
 The browser suite uses entirely fictional intercepted session/provider data,
 without an invitation bearer. It checks 1280×960 desktop and 390×844 mobile
@@ -97,10 +97,10 @@ Lint warnings are in `components/ui/combobox.tsx`, `lib/demo-engine.ts`,
 The operator authorized exactly two live calls and staging only after those
 tests pass. Both prompt-version-2 attempts failed without persisting an answer:
 
-| Fictional case | Service duration | Result | Reserved USD | Actual charge |
-| --- | --- | --- | --- | --- |
-| English camera workflow | 8,013 ms | 503 at inference deadline | 0.046605 | Unknown |
-| Polish workshop workflow | 8,010 ms | 503 at inference deadline | 0.047295 | Unknown |
+| Fictional case           | Service duration | Result                    | Reserved USD | Actual charge |
+| ------------------------ | ---------------- | ------------------------- | ------------ | ------------- |
+| English camera workflow  | 8,013 ms         | 503 at inference deadline | 0.046605     | Unknown       |
+| Polish workshop workflow | 8,010 ms         | 503 at inference deadline | 0.047295     | Unknown       |
 
 The existing adapter deadline could fire before the service timer, so both
 ledger entries used the generic `provider_failure` label. The new offline-tested
@@ -126,10 +126,10 @@ its request-ledger migration was not applied.
 The operator approved two additional calls. The original report was preserved;
 this run is in ignored `outputs/discovery-paid-smoke-compact-v3.json`.
 
-| Fictional case | Service duration | Result | Accounted/reserved USD |
-| --- | --- | --- | --- |
-| English camera workflow | 8,017 ms | 503; provider_timeout; no answer saved | 0.043035 reserved; actual charge unknown |
-| Polish workshop workflow | 7,775 ms | Saved; all smoke checks passed | 0.013491 conservatively accounted from token usage |
+| Fictional case           | Service duration | Result                                 | Accounted/reserved USD                             |
+| ------------------------ | ---------------- | -------------------------------------- | -------------------------------------------------- |
+| English camera workflow  | 8,017 ms         | 503; provider_timeout; no answer saved | 0.043035 reserved; actual charge unknown           |
+| Polish workshop workflow | 7,775 ms         | Saved; all smoke checks passed         | 0.013491 conservatively accounted from token usage |
 
 The successful Polish result used 957 input tokens and 885 output tokens. It
 produced sourced evidence for all nine topics, ended at review after one answer,
@@ -165,10 +165,10 @@ strict validation. No rejected output was accepted. Provider prompt/schema v4
 now explicitly shares the parser’s quote and array bounds and exact-copy rule.
 The following real-provider pair passed both cases:
 
-| Fictional case | Saved acknowledgement | Final summary | Result | Conservative usage |
-| --- | --- | --- | --- | --- |
-| English camera |29ms |8.061s |Measurement and safety gaps kept; operator gate intact |$0.012516 |
-| Polish workshop |3ms |8.310s |Nine sourced topics, early review; operator gate intact |$0.014664 |
+| Fictional case  | Saved acknowledgement | Final summary | Result                                                  | Conservative usage |
+| --------------- | --------------------- | ------------- | ------------------------------------------------------- | ------------------ |
+| English camera  | 29ms                  | 8.061s        | Measurement and safety gaps kept; operator gate intact  | $0.012516          |
+| Polish workshop | 3ms                   | 8.310s        | Nine sourced topics, early review; operator gate intact | $0.014664          |
 
 Eight live attempts have now run in total. Combined conservative accounting
 is $0.203691, including full reservations for three earlier unknown-usage

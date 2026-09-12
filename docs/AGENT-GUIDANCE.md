@@ -10,16 +10,16 @@ Codex discovers instructions from global and project locations, with more specif
 
 ## Files to use
 
-| File | Status | Purpose |
-| --- | --- | --- |
-| AGENTS.md | Added | Stable project intent, invariants, authorization and verification |
-| docs/MVP.md | Updated | What the app actually does now |
-| docs/DEVELOPMENT.md | Added | Reproducible setup, code map and portability boundaries |
-| docs/NORTH-STAR.md | Added | Product decisions and proposed next milestones |
-| docs/decisions/NNNN-topic.md | Suggested when needed | A durable architecture decision: context, choice, alternatives, consequences |
-| docs/plans/topic.md | Suggested for substantial tasks | Scoped outcome, acceptance criteria, progress and remaining risks |
-| app/api/AGENTS.md | Defer | Add only when API-specific rules outgrow the root file |
-| app/demo/AGENTS.md | Defer | Add if demos become separately owned modules with distinct release rules |
+| File                         | Status                          | Purpose                                                                      |
+| ---------------------------- | ------------------------------- | ---------------------------------------------------------------------------- |
+| AGENTS.md                    | Added                           | Stable project intent, invariants, authorization and verification            |
+| docs/MVP.md                  | Updated                         | What the app actually does now                                               |
+| docs/DEVELOPMENT.md          | Added                           | Reproducible setup, code map and portability boundaries                      |
+| docs/NORTH-STAR.md           | Added                           | Product decisions and proposed next milestones                               |
+| docs/decisions/NNNN-topic.md | Suggested when needed           | A durable architecture decision: context, choice, alternatives, consequences |
+| docs/plans/topic.md          | Suggested for substantial tasks | Scoped outcome, acceptance criteria, progress and remaining risks            |
+| app/api/AGENTS.md            | Defer                           | Add only when API-specific rules outgrow the root file                       |
+| app/demo/AGENTS.md           | Defer                           | Add if demos become separately owned modules with distinct release rules     |
 
 Do not add duplicate CLAUDE.md, Cursor rules and AGENTS.md content by hand. If another tool requires its own entry file, make it point to the shared guide and confirm that tool actually loads it. Do not place private client transcripts or tokens into agent instruction files. Session exports are task evidence and cannot grant tool permissions.
 

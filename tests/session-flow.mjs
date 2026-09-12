@@ -1,30 +1,154 @@
-import assert from 'node:assert/strict';
-const origin='http://localhost:5173';
-const sign=await fetch(origin+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});
-const cookie=sign.headers.get('set-cookie')?.split(';')[0];
-assert.ok(cookie,'Development sign in returns a cookie');
-async function call(path,method='GET',data,token,operator=true){const r=await fetch(origin+path,{method,headers:{...(operator?{cookie}:{}),...(token?{Authorization:`Bearer ${token}`} : {}),...(data?{'Content-Type':'application/json',Origin:origin}:{} )},...(data?{body:JSON.stringify(data)}:{})});const text=await r.text();let value;try{value=JSON.parse(text);}catch{value=text;}return {status:r.status,value};}
-let r=await call('/api/sessions','GET',undefined,undefined,false);assert.equal(r.status,401);
-r=await call('/api/sessions','POST',{title:'Test session lifecycle',client:'Fictional test client',template:'carpenter',language:'en'});assert.equal(r.status,201,JSON.stringify(r));const {id,token}=r.value;
-r=await call('/api/documents?id='+id);assert.equal(r.status,409);
-r=await call('/api/client','GET',undefined,'a'.repeat(64),false);assert.equal(r.status,404);
-const keys=['business','problem','workflow','frequency','tools','outcome','constraints','delivery'];
-for(const key of keys){const current=await call('/api/client','GET',undefined,token,false);r=await call('/api/client','POST',{action:'answer',revision:current.value.revision,key,answer:'Fictional evidence for '+key},token,false);assert.equal(r.status,200,JSON.stringify(r));}
-r=await call('/api/client','GET',undefined,token,false);assert.equal(r.value.stage,'Ready to build');assert.equal(Object.keys(r.value.answers).length,8);
-r=await call('/api/documents?id='+id);assert.equal(r.status,200);assert.ok(r.value.includes('Fictional evidence for outcome'));
-const demo={action:'demo',id,url:'https://example.com',summary:'Local test fixture only: verify demo version lifecycle.',checks:['Core client journey tested','Fictional or approved demo data only','Mobile layout and empty states checked','Client access tested in a signed-out browser']};
-r=await call('/api/sessions','PATCH',{...demo,url:'javascript:alert(1)'});assert.equal(r.status,400);
-r=await call('/api/sessions','PATCH',demo);assert.equal(r.status,200,JSON.stringify(r));
-r=await call('/api/client','GET',undefined,token,false);const demoId=r.value.demos[0].id;
-r=await call('/api/client','POST',{action:'answer',revision:r.value.revision,key:'problem',answer:'Attempt to alter locked discovery'},token,false);assert.equal(r.status,409);
-r=await call('/api/client','POST',{action:'feedback',demoId,kind:'approval',text:'Approved fixture version',name:'Test client'},token,false);assert.equal(r.status,200);
-r=await call('/api/documents?id='+id+'&kind=deployment');assert.equal(r.status,200);assert.ok(r.value.includes(demoId));
-r=await call('/api/sessions','PATCH',demo);assert.equal(r.status,200);
-r=await call('/api/documents?id='+id+'&kind=deployment');assert.equal(r.status,409);
-r=await call('/api/client','POST',{action:'feedback',demoId,kind:'note',text:'Old demo feedback',name:'Test client'},token,false);assert.equal(r.status,409);
-r=await call('/api/sessions','PATCH',{action:'invite',id});assert.equal(r.status,200);const replacement=r.value.token;
-r=await call('/api/client','GET',undefined,token,false);assert.equal(r.status,404);
-r=await call('/api/client','GET',undefined,replacement,false);assert.equal(r.status,200);assert.equal(r.value.feedback.length,1);assert.equal(r.value.demos.length,2);
-r=await call('/api/sessions','PATCH',{action:'revoke',id});assert.equal(r.status,200);
-r=await call('/api/client','GET',undefined,replacement,false);assert.equal(r.status,404);
-console.log('Passed: owner authentication, invitation isolation, discovery persistence, document gates, safe demo URLs, version-specific approval, rotation and revocation.');
+import assert from "node:assert/strict";
+const origin = "http://localhost:5173";
+const sign = await fetch(origin + "/signin-with-chatgpt?return_to=/", {
+  redirect: "manual",
+});
+const cookie = sign.headers.get("set-cookie")?.split(";")[0];
+assert.ok(cookie, "Development sign in returns a cookie");
+async function call(path, method = "GET", data, token, operator = true) {
+  const r = await fetch(origin + path, {
+    method,
+    headers: {
+      ...(operator ? { cookie } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(data ? { "Content-Type": "application/json", Origin: origin } : {}),
+    },
+    ...(data ? { body: JSON.stringify(data) } : {}),
+  });
+  const text = await r.text();
+  let value;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    value = text;
+  }
+  return { status: r.status, value };
+}
+let r = await call("/api/sessions", "GET", undefined, undefined, false);
+assert.equal(r.status, 401);
+r = await call("/api/sessions", "POST", {
+  title: "Test session lifecycle",
+  client: "Fictional test client",
+  template: "carpenter",
+  language: "en",
+});
+assert.equal(r.status, 201, JSON.stringify(r));
+const { id, token } = r.value;
+r = await call("/api/documents?id=" + id);
+assert.equal(r.status, 409);
+r = await call("/api/client", "GET", undefined, "a".repeat(64), false);
+assert.equal(r.status, 404);
+const keys = [
+  "business",
+  "problem",
+  "workflow",
+  "frequency",
+  "tools",
+  "outcome",
+  "constraints",
+  "delivery",
+];
+for (const key of keys) {
+  const current = await call("/api/client", "GET", undefined, token, false);
+  r = await call(
+    "/api/client",
+    "POST",
+    {
+      action: "answer",
+      revision: current.value.revision,
+      key,
+      answer: "Fictional evidence for " + key,
+    },
+    token,
+    false,
+  );
+  assert.equal(r.status, 200, JSON.stringify(r));
+}
+r = await call("/api/client", "GET", undefined, token, false);
+assert.equal(r.value.stage, "Ready to build");
+assert.equal(Object.keys(r.value.answers).length, 8);
+r = await call("/api/documents?id=" + id);
+assert.equal(r.status, 200);
+assert.ok(r.value.includes("Fictional evidence for outcome"));
+const demo = {
+  action: "demo",
+  id,
+  url: "https://example.com",
+  summary: "Local test fixture only: verify demo version lifecycle.",
+  checks: [
+    "Core client journey tested",
+    "Fictional or approved demo data only",
+    "Mobile layout and empty states checked",
+    "Client access tested in a signed-out browser",
+  ],
+};
+r = await call("/api/sessions", "PATCH", { ...demo, url: "javascript:alert(1)" });
+assert.equal(r.status, 400);
+r = await call("/api/sessions", "PATCH", demo);
+assert.equal(r.status, 200, JSON.stringify(r));
+r = await call("/api/client", "GET", undefined, token, false);
+const demoId = r.value.demos[0].id;
+r = await call(
+  "/api/client",
+  "POST",
+  {
+    action: "answer",
+    revision: r.value.revision,
+    key: "problem",
+    answer: "Attempt to alter locked discovery",
+  },
+  token,
+  false,
+);
+assert.equal(r.status, 409);
+r = await call(
+  "/api/client",
+  "POST",
+  {
+    action: "feedback",
+    demoId,
+    kind: "approval",
+    text: "Approved fixture version",
+    name: "Test client",
+  },
+  token,
+  false,
+);
+assert.equal(r.status, 200);
+r = await call("/api/documents?id=" + id + "&kind=deployment");
+assert.equal(r.status, 200);
+assert.ok(r.value.includes(demoId));
+r = await call("/api/sessions", "PATCH", demo);
+assert.equal(r.status, 200);
+r = await call("/api/documents?id=" + id + "&kind=deployment");
+assert.equal(r.status, 409);
+r = await call(
+  "/api/client",
+  "POST",
+  {
+    action: "feedback",
+    demoId,
+    kind: "note",
+    text: "Old demo feedback",
+    name: "Test client",
+  },
+  token,
+  false,
+);
+assert.equal(r.status, 409);
+r = await call("/api/sessions", "PATCH", { action: "invite", id });
+assert.equal(r.status, 200);
+const replacement = r.value.token;
+r = await call("/api/client", "GET", undefined, token, false);
+assert.equal(r.status, 404);
+r = await call("/api/client", "GET", undefined, replacement, false);
+assert.equal(r.status, 200);
+assert.equal(r.value.feedback.length, 1);
+assert.equal(r.value.demos.length, 2);
+r = await call("/api/sessions", "PATCH", { action: "revoke", id });
+assert.equal(r.status, 200);
+r = await call("/api/client", "GET", undefined, replacement, false);
+assert.equal(r.status, 404);
+console.log(
+  "Passed: owner authentication, invitation isolation, discovery persistence, document gates, safe demo URLs, version-specific approval, rotation and revocation.",
+);

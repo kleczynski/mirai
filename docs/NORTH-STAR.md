@@ -10,14 +10,14 @@ The product earns trust when a client can point to one recurring task that impro
 
 ## Settled decisions
 
-| Decision | Owner's choice |
-| --- | --- |
-| Primary user for the next six months | The owner's own FDE business |
-| Success | Measured improvement after real use |
-| Customer product ownership | Customer-owned accounts, optional maintenance |
-| Initial focus | Test the three friend workflows, then focus on one |
-| Agent authority | AI prepares; operator approves delivery |
-| Pilot evidence | Two-week before/after measurement, pre-agreed target and acceptable error rate |
+| Decision                             | Owner's choice                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------ |
+| Primary user for the next six months | The owner's own FDE business                                                   |
+| Success                              | Measured improvement after real use                                            |
+| Customer product ownership           | Customer-owned accounts, optional maintenance                                  |
+| Initial focus                        | Test the three friend workflows, then focus on one                             |
+| Agent authority                      | AI prepares; operator approves delivery                                        |
+| Pilot evidence                       | Two-week before/after measurement, pre-agreed target and acceptable error rate |
 
 Pricing, exact per-client thresholds and maintenance terms remain commercial decisions for each pilot. They do not need to be embedded in the platform vision now.
 
@@ -41,11 +41,11 @@ Track time from discovery to first useful demo, first-attempt task completion, r
 
 ## First three experiments
 
-| Workflow | Baseline and comparison | Quality boundary | Decision signal |
-| --- | --- | --- | --- |
-| Stolarz | Time to prepare comparable board-cutting plans, material utilization, manual corrections | Carpenter checks kerf, grain, dimensions and machine suitability before use | Usable plans with less preparation work and acceptable waste |
-| PC-Market | Time from shelf check to reviewed order, stock discrepancies, rejected order lines | Correct item/EAN, pack sizes and quantities; human approves order | Fewer manual steps without incorrect purchasing |
-| Dental | Time to finish a reviewed note from a fictional/approved test summary, required edits and omissions | Clinician verifies fidelity; no invented facts; real patient use requires a separately prepared system | Less documentation effort without loss of accuracy |
+| Workflow  | Baseline and comparison                                                                             | Quality boundary                                                                                       | Decision signal                                              |
+| --------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| Stolarz   | Time to prepare comparable board-cutting plans, material utilization, manual corrections            | Carpenter checks kerf, grain, dimensions and machine suitability before use                            | Usable plans with less preparation work and acceptable waste |
+| PC-Market | Time from shelf check to reviewed order, stock discrepancies, rejected order lines                  | Correct item/EAN, pack sizes and quantities; human approves order                                      | Fewer manual steps without incorrect purchasing              |
+| Dental    | Time to finish a reviewed note from a fictional/approved test summary, required edits and omissions | Clinician verifies fidelity; no invented facts; real patient use requires a separately prepared system | Less documentation effort without loss of accuracy           |
 
 Choose the first repeatable offer from observed benefit, willingness to pay, integration feasibility and maintenance cost. The three anecdotes are discovery evidence; they do not yet establish demand or measured savings.
 

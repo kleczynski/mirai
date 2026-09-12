@@ -1,11 +1,107 @@
-import { z } from 'zod';
-import { body,owner,database,hash,invitationToken,json,failure } from '@/lib/server';
-import type { SessionData } from '@/lib/model';
-export const dynamic='force-dynamic';
-const entry=z.object({sourceSessionId:z.string().regex(/^cs-\d+$/),briefId:z.string().max(100),capturedAt:z.string().datetime(),title:z.string().min(2).max(100),client:z.string().min(2).max(100),template:z.enum(['carpenter','retail','dental']),answers:z.record(z.string().max(4000)),transcript:z.array(z.object({sender:z.enum(['bot','user']),text:z.string().max(4000)})).min(1).max(40),assumptions:z.array(z.string().max(1000)).max(20),openQuestions:z.array(z.string().max(1000)).max(20)});
-const summaries={carpenter:'Wpisz elementy, sprawdź rzaz 3,2 mm i kierunek słojów, oblicz rozkrój, zapisz projekt i pobierz plan. Dane początkowe są fikcyjne. Plan wymaga sprawdzenia przez stolarza przed cięciem.',retail:'Porównaj stan systemowy z półką, wylicz zapotrzebowanie i porównaj przykładowe ceny. Potwierdź ilości i pobierz zamówienie CSV. Brak połączenia z PC-Market i hurtowniami; plik nie jest EDI++.',dental:'Wpisz fikcyjne podsumowanie wizyty lub użyj dyktowania, jeśli przeglądarka je obsługuje. Utwórz szkic zachowujący podany tekst, popraw go, potwierdź przegląd i pobierz notatkę. Brak integracji Prodentis i automatycznego kodowania NFZ.'};
-export async function POST(request:Request){try{const u=await owner();const input=z.object({sessions:z.array(entry).length(3)}).parse(await body(request));if(new Set(input.sessions.map(x=>x.template)).size!==3)throw new Error('Expected one session for each playbook.');const now=new Date().toISOString();const ids:string[]=[];const statements=[];
-for(const e of input.sessions){const digest=await hash(u.userId+':telegram:'+e.sourceSessionId);const id=`${digest.slice(0,8)}-${digest.slice(8,12)}-4${digest.slice(13,16)}-a${digest.slice(17,20)}-${digest.slice(20,32)}`;ids.push(id);const demoId=crypto.randomUUID();const data:SessionData={title:e.title,client:e.client,template:e.template,language:'pl',stage:'Demo review',answers:e.answers,demos:[{id:demoId,version:1,url:`/demo/${id}`,summary:summaries[e.template],checks:['Functional demo checks passed; client acceptance is pending.'],bundled:true,createdAt:now}],feedback:[],approvedDemoId:null,source:{channel:'telegram',sourceSessionId:e.sourceSessionId,briefId:e.briefId,capturedAt:e.capturedAt,importedAt:now,transcript:e.transcript,assumptions:e.assumptions,openQuestions:e.openQuestions}};
-statements.push(database().prepare('INSERT INTO sessions (id,owner_id,token_hash,expires_at,data,revision,created_at,updated_at) VALUES (?,?,?,?,?,0,?,?) ON CONFLICT(id) DO NOTHING').bind(id,u.userId,await hash(invitationToken()),new Date(0).toISOString(),JSON.stringify(data),now,now));}
-const result=await database().batch(statements);return json({ids,created:result.reduce((n,r)=>n+(r.meta.changes??0),0)});
-}catch(e){return failure(e);}}
+import { z } from "zod";
+import {
+  body,
+  owner,
+  database,
+  hash,
+  invitationToken,
+  json,
+  failure,
+} from "@/lib/server";
+import type { SessionData } from "@/lib/model";
+export const dynamic = "force-dynamic";
+const entry = z.object({
+  sourceSessionId: z.string().regex(/^cs-\d+$/),
+  briefId: z.string().max(100),
+  capturedAt: z.string().datetime(),
+  title: z.string().min(2).max(100),
+  client: z.string().min(2).max(100),
+  template: z.enum(["carpenter", "retail", "dental"]),
+  answers: z.record(z.string().max(4000)),
+  transcript: z
+    .array(z.object({ sender: z.enum(["bot", "user"]), text: z.string().max(4000) }))
+    .min(1)
+    .max(40),
+  assumptions: z.array(z.string().max(1000)).max(20),
+  openQuestions: z.array(z.string().max(1000)).max(20),
+});
+const summaries = {
+  carpenter:
+    "Wpisz elementy, sprawdź rzaz 3,2 mm i kierunek słojów, oblicz rozkrój, zapisz projekt i pobierz plan. Dane początkowe są fikcyjne. Plan wymaga sprawdzenia przez stolarza przed cięciem.",
+  retail:
+    "Porównaj stan systemowy z półką, wylicz zapotrzebowanie i porównaj przykładowe ceny. Potwierdź ilości i pobierz zamówienie CSV. Brak połączenia z PC-Market i hurtowniami; plik nie jest EDI++.",
+  dental:
+    "Wpisz fikcyjne podsumowanie wizyty lub użyj dyktowania, jeśli przeglądarka je obsługuje. Utwórz szkic zachowujący podany tekst, popraw go, potwierdź przegląd i pobierz notatkę. Brak integracji Prodentis i automatycznego kodowania NFZ.",
+};
+export async function POST(request: Request) {
+  try {
+    const u = await owner();
+    const input = z
+      .object({ sessions: z.array(entry).length(3) })
+      .parse(await body(request));
+    if (new Set(input.sessions.map((x) => x.template)).size !== 3)
+      throw new Error("Expected one session for each playbook.");
+    const now = new Date().toISOString();
+    const ids: string[] = [];
+    const statements = [];
+    for (const e of input.sessions) {
+      const digest = await hash(u.userId + ":telegram:" + e.sourceSessionId);
+      const id = `${digest.slice(0, 8)}-${digest.slice(8, 12)}-4${digest.slice(13, 16)}-a${digest.slice(17, 20)}-${digest.slice(20, 32)}`;
+      ids.push(id);
+      const demoId = crypto.randomUUID();
+      const data: SessionData = {
+        title: e.title,
+        client: e.client,
+        template: e.template,
+        language: "pl",
+        stage: "Demo review",
+        answers: e.answers,
+        demos: [
+          {
+            id: demoId,
+            version: 1,
+            url: `/demo/${id}`,
+            summary: summaries[e.template],
+            checks: ["Functional demo checks passed; client acceptance is pending."],
+            bundled: true,
+            createdAt: now,
+          },
+        ],
+        feedback: [],
+        approvedDemoId: null,
+        source: {
+          channel: "telegram",
+          sourceSessionId: e.sourceSessionId,
+          briefId: e.briefId,
+          capturedAt: e.capturedAt,
+          importedAt: now,
+          transcript: e.transcript,
+          assumptions: e.assumptions,
+          openQuestions: e.openQuestions,
+        },
+      };
+      statements.push(
+        database()
+          .prepare(
+            "INSERT INTO sessions (id,owner_id,token_hash,expires_at,data,revision,created_at,updated_at) VALUES (?,?,?,?,?,0,?,?) ON CONFLICT(id) DO NOTHING",
+          )
+          .bind(
+            id,
+            u.userId,
+            await hash(invitationToken()),
+            new Date(0).toISOString(),
+            JSON.stringify(data),
+            now,
+            now,
+          ),
+      );
+    }
+    const result = await database().batch(statements);
+    return json({
+      ids,
+      created: result.reduce((n, r) => n + (r.meta.changes ?? 0), 0),
+    });
+  } catch (e) {
+    return failure(e);
+  }
+}
