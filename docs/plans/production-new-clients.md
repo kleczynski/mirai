@@ -81,20 +81,6 @@ remains a preserved secret setting. No broader client flow or microphone
 coverage is claimed. Future failures can be located by the logged query stage;
 this release did not deliberately inject an error into production.
 
-## Repository workflow update, 2026-09-13
-
-Developer guidance now uses affected checks, recorded authorization and resumable
-stage checkpoints. Existing build-export instructions share those expectations.
-See the [progress record](../plans/developer-workflow.md) for local completion and
-verification. This repository change is not a Worker release, schema change or
-new implementation of accepted-feedback iteration records.
-
-Sep 13 monitoring commits and task-reported deployments postdate the release
-version tables below. Their complete staging, live configuration/build provenance
-and authenticated owner monitoring results are not recorded here. Treat version
-tables as dated evidence; inspect actual live state before the next release.
-Anonymous 401 alone is not owner feature verification.
-
 ## BDO expert demo release, 2026-09-12
 
 The owner subsequently authorized the private repository and remaining expert-demo
@@ -456,17 +442,15 @@ Browser recognition may use the browser vendor's service.
 
 ## Repeat a release safely
 
-1. Use relevant DEVELOPMENT commands and this runbook's release sequence. Confirm
-   the accepted change and exact authorization, inspect the working tree and live
-   routing, active Worker versions, relevant configuration and D1 schema. Preserve
-   unrelated changes and inspect shared-demo approval implications. Reuse stable
-   project guidance; reconstruct migration history only when changing hosting or
-   data ownership. Resume substantial work from its verified progress checkpoint.
+1. Read `AGENTS.md`, `README.md`, `docs/MVP.md`, `docs/DEVELOPMENT.md` and this
+   runbook. Check live custom-domain mapping, current Worker versions and D1
+   schema. Preserve other agents' changes. Check demo/approval implications
+   before changing shared demo behavior.
 2. Establish the exact source revision. Keep `.dev.vars*`, `.env.local`, `.wrangler`,
    `.sites-runtime`, `outputs` and credentials out of commits and build archives.
    Use an isolated source checkout without local environment files for production.
-3. Run the development guide's typecheck, lint and affected behavior checks,
-   including relevant API and browser checks. Run a production build from the same source.
+3. Run the development guide's typecheck, lint, discovery tests, relevant local API
+   lifecycle tests and browser checks. Run a production build from the same source.
    Never point fixture-writing scripts at production. Browser/microphone coverage
    cannot be inferred from a successful build.
 4. Build staging with its `pk_test_` Clerk publishable key. Run
@@ -483,7 +467,7 @@ Browser recognition may use the browser vendor's service.
    If paid calls are authorized, use fictional evidence, a call budget and recorded
    accounting. Revoke test invites; retain their ledger. Do not notify clients.
 7. Production deployment needs explicit operator approval; staging success alone
-   does not grant it. Historical approval records are not approval for a new release. Build an isolated
+   does not grant it. For this release that approval was given. Build an isolated
    copy of the validated source with the production `pk_live_` key, then run
    `node scripts/prepare-production-deploy.mjs /absolute/path/to/isolated-build`.
    It verifies the production key and pins the correct account/D1. Existing
