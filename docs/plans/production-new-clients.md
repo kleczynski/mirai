@@ -6,6 +6,23 @@ Always inspect live configuration before the next release; these observations ar
 
 ## Monitoring endpoint repair, 2026-09-13
 
+Stages: [x] Scope → [x] Implement → [x] Verify → [x] Release (authorized)
+
+- Current stage: released; authenticated production repair verified.
+- Base source/environment: `0ad619e`, `mirai-production` at `mirai.party`.
+- Last verified checkpoint: source `8eb05d6`, production owner HTTP 200 on
+  `234c2da2-e7f4-4833-a0e1-ab573d024833`; details below.
+- Changed files: monitoring route, offline regression, CI regression step,
+  two missing lock entries and this release record.
+- Open blockers: none for the monitoring repair. GitHub Verify run
+  `34761608833` failed its formatting step; the isolated source reports 13
+  pre-existing formatting failures in files unchanged from the baseline.
+  This release does not claim a green complete CI run.
+- Next action: operator resumes monitoring; formatting cleanup is separate work.
+- Recovery: inspect the active version and use this runbook's rollback guidance;
+  the previous version has the known monitoring failure and no schema rollback
+  is needed.
+
 Owner-authorized production repair deployed from `main` source `8eb05d6`
 (monitoring fix `e42afe2`). Current production Worker:
 `234c2da2-e7f4-4833-a0e1-ab573d024833`; replaced
@@ -63,6 +80,20 @@ the returned workspace cap was independently observed, while the session cap
 remains a preserved secret setting. No broader client flow or microphone
 coverage is claimed. Future failures can be located by the logged query stage;
 this release did not deliberately inject an error into production.
+
+## Repository workflow update, 2026-09-13
+
+Developer guidance now uses affected checks, recorded authorization and resumable
+stage checkpoints. Existing build-export instructions share those expectations.
+See the [progress record](../plans/developer-workflow.md) for local completion and
+verification. This repository change is not a Worker release, schema change or
+new implementation of accepted-feedback iteration records.
+
+Sep 13 monitoring commits and task-reported deployments postdate the release
+version tables below. Their complete staging, live configuration/build provenance
+and authenticated owner monitoring results are not recorded here. Treat version
+tables as dated evidence; inspect actual live state before the next release.
+Anonymous 401 alone is not owner feature verification.
 
 ## BDO expert demo release, 2026-09-12
 
@@ -425,15 +456,17 @@ Browser recognition may use the browser vendor's service.
 
 ## Repeat a release safely
 
-1. Read `AGENTS.md`, `README.md`, `docs/MVP.md`, `docs/DEVELOPMENT.md` and this
-   runbook. Check live custom-domain mapping, current Worker versions and D1
-   schema. Preserve other agents' changes. Check demo/approval implications
-   before changing shared demo behavior.
+1. Use relevant DEVELOPMENT commands and this runbook's release sequence. Confirm
+   the accepted change and exact authorization, inspect the working tree and live
+   routing, active Worker versions, relevant configuration and D1 schema. Preserve
+   unrelated changes and inspect shared-demo approval implications. Reuse stable
+   project guidance; reconstruct migration history only when changing hosting or
+   data ownership. Resume substantial work from its verified progress checkpoint.
 2. Establish the exact source revision. Keep `.dev.vars*`, `.env.local`, `.wrangler`,
    `.sites-runtime`, `outputs` and credentials out of commits and build archives.
    Use an isolated source checkout without local environment files for production.
-3. Run the development guide's typecheck, lint, discovery tests, relevant local API
-   lifecycle tests and browser checks. Run a production build from the same source.
+3. Run the development guide's typecheck, lint and affected behavior checks,
+   including relevant API and browser checks. Run a production build from the same source.
    Never point fixture-writing scripts at production. Browser/microphone coverage
    cannot be inferred from a successful build.
 4. Build staging with its `pk_test_` Clerk publishable key. Run
@@ -450,7 +483,7 @@ Browser recognition may use the browser vendor's service.
    If paid calls are authorized, use fictional evidence, a call budget and recorded
    accounting. Revoke test invites; retain their ledger. Do not notify clients.
 7. Production deployment needs explicit operator approval; staging success alone
-   does not grant it. For this release that approval was given. Build an isolated
+   does not grant it. Historical approval records are not approval for a new release. Build an isolated
    copy of the validated source with the production `pk_live_` key, then run
    `node scripts/prepare-production-deploy.mjs /absolute/path/to/isolated-build`.
    It verifies the production key and pins the correct account/D1. Existing
