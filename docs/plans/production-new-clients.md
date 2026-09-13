@@ -1,8 +1,254 @@
 # Mirai release and operations runbook
 
-Verified on 2026-09-11 after the discovery release. This is the current operations
+Verified on 2026-09-12 after the project collaboration release. This is the current operations
 reference. Earlier migration investigations describe history, not actions to replay.
 Always inspect live configuration before the next release; these observations are dated.
+
+## BDO expert demo release, 2026-09-12
+
+The owner subsequently authorized the private repository and remaining expert-demo
+steps. [kleczynski/mirai-bdo-kpo](https://github.com/kleczynski/mirai-bdo-kpo) was
+created private. The separate fictional review app is live at
+https://mirai-bdo-kpo-demo.kleczynski11312.workers.dev/ from source
+`40dc3262b64501385f77c255d0b5a820726c9b2d`, Worker version
+`9c68a383-f8e2-4996-be6e-6c9628599cc6`. This is a static review release, not real
+BDO integration or the agency pilot. No Mirai runtime release or schema change was
+performed for this step; existing discovery caps and accounting were untouched.
+
+The owner-accepted bounded demo scope is recorded as scope 2 in project
+`f3bb6569-6c84-4e75-8210-aa0523f72bc8`. Readiness is confirmed and demo version 1 is
+attached with source, deployment and test-manifest metadata. The production UI
+confirmed Demo review, Approval pending and zero pilot records. Twelve evidence
+cards now exist, including the accepted authorization; original collaborator files
+and actual expert feedback remain pending. Historical intake notes below describe
+the earlier checkpoint and do not override this update.
+
+The 15 domain/storage tests, typecheck, lint, build and exact-source GitHub CI passed.
+Live HTML/JS/CSS/manifest matched the isolated build; hosted save/reload worked.
+The app uses browser-local fictional data, has no Cloudflare resource bindings and
+sets CSP connect-src to none. Role selection is a simulation, not authentication.
+Detailed provenance, asset hashes, browser coverage and limitations are in the
+[BDO release record](https://github.com/kleczynski/mirai-bdo-kpo/blob/master/docs/RELEASE.md).
+The public review URL does not expose the private source repository. Real BDO
+credentials, authenticated test-company checks, deployment tailoring and measured
+pilot results remain future work after actual expert review. Mirai brief export was
+requested, but successful saving of its downloaded file could not be verified;
+the accepted scope is preserved in the separate repository's docs/BRIEF.md.
+
+## BDO project intake after release
+
+The owner subsequently signed in and authorized inviting the named collaborator.
+Project `f3bb6569-6c84-4e75-8210-aa0523f72bc8` was created through the production
+Mirai UI with collaborator origin and David as introducer; eleven provenance-tagged
+cards were saved. The scoped invitation was sent through the owner's Gmail and the
+UI confirmed Message sent. No acceptance, readiness or demo approval was asserted.
+This is authorized product data, not a production test fixture. Earlier release
+counts below are observations at release time; this checkpoint adds one project.
+No Worker deployment, migration, paid discovery call or change to existing sessions
+was performed in this intake task. See the [BDO milestone update](../specs/0003-bdo-kpo-contract-validation.md)
+for the fictional expert-demo scope and remaining repository decision.
+
+## Released project collaboration, 2026-09-12
+
+The operator authorized staging, then production if checks passed. Both are now
+running the project/collaborator implementation from local source commit
+`71d71db47bf862d610cb91754ff1d65f2420cabe`, branch
+`codex/project-collaboration-release`. This includes the already-deployed adaptive
+discovery baseline below; its implementation was compared with the prior source
+archive before release. Unrelated working-tree changes were preserved. No remote
+Git push, real collaborator invitation or BDO deployment occurred.
+
+| Target | Current Worker version | Previous Worker version |
+| --- | --- | --- |
+| Staging | `49379cbe-54b1-410b-b823-d2aeb9621894` | `869bb641-24cc-4845-9ae0-94e62bc55659` |
+| Production | `34cfc940-aef7-453f-b041-6e5e68a0fd54` | `56266bde-b313-4994-ab0e-91486202fd58` |
+
+### Observable behavior and source
+
+`/projects` now supports client/collaborator/owner origins, server-authorized Clerk
+contributors, verified-email invitations, immutable evidence revisions and owner
+review, personal/shared layout, private original files, readiness/build export,
+versioned external demos, feedback/current-version approval, pilot records and
+handoff. Accepted scope changes reopen readiness and block handoff until a new
+approved demo. Pending contributions leave accepted snapshots unchanged. Archive
+revokes access; explicit content/file purge preserves accounting and a tombstone.
+
+Implementation: `app/projects/`, `app/api/projects/`, `lib/project-*`, additive
+`db/schema.ts` tables, legacy mutation/accounting guards in `app/api/sessions/route.ts`
+and `lib/discovery-service.ts`, Clerk principal extraction in `lib/server.ts`, and
+R2 deploy/local bindings. [Scope](../scope/project-collaboration.md),
+[inspection](../specs/0002-project-collaboration-inspection.md) and
+[ADRs](../adr/0001-project-collaboration.md) describe the permission and data contracts.
+
+### Schema, build and storage
+
+Generated/reviewed migration `drizzle/0003_salty_giant_girl.sql` applied once to each
+inspected database: 15 additive table/index statements, with no rewrite of existing
+sessions, invitation hashes, demos, feedback or approvals. New tables cover project
+metadata, memberships, invitations, evidence/immutable revisions, comments, canvas,
+audit, files and retired discovery usage. Local migration tests verify fresh
+initialization and byte-for-byte preservation of fictional legacy data.
+
+D1 post-migration bookmarks: staging
+`0000000d-00000006-000050e4-7ac0da923a051b38e198453e8bcd221c`, production
+`00000033-00000006-000050e4-29244f3f03bb297f3838799b353612cc`.
+Private R2 buckets `mirai-staging-files` and `mirai-production-files` bind as
+`BUCKET`. Both r2.dev public URLs are disabled. Download routes reauthorize project
+membership; original files are not public assets.
+
+Staging and production builds used isolated checkouts without local environment
+files, matching Clerk test/live publishable keys, reviewed deployment overlays and
+`--keep-vars`. Runtime secrets were preserved. Production served bytes match the
+isolated build for the Clerk provider, legacy session and both workspace chunks.
+Project/legacy workspace SHA256 values respectively appear in the safe report
+`outputs/project-collaboration/production-check.json`; Clerk provider remains
+`5fd959161be70bafb45a131b3ab14a42c0fd274eac78e8c75f0e9521bffaac19`.
+Build checkouts/logs are ignored under `outputs/project-collaboration/`; do not
+publish that directory wholesale. Later release-record/intake edits are docs-only.
+
+### Verification performed
+
+Typecheck, isolated staging/production builds and application lint pass; lint has
+four preexisting warnings. Project service, HTTP and migration suites pass, as do
+existing session/lifecycle/import/discovery/deadline/domain/attach-blocker checks.
+Project coverage includes cross-project reads/writes, forged identity, wrong or
+unverified invited email, invitation replay/expiry/revocation, own-evidence-only
+edits, atomic revocation races, immutable accepted revisions, layout conflicts,
+readiness/approval invalidation, private file access and archive/purge accounting.
+
+Hosted staging passed 66 authenticated HTTP checks with real development Clerk
+sessions and fictional identities. They include invitation acceptance, exact
+identity/project isolation, owner-only operation denial, evidence attribution,
+private R2 upload/download, revision conflicts, approval/export gates and immediate
+revocation. The browser used Clerk's no-email development test identity: sign-in,
+scoped project list, contributor controls, evidence save/provenance, then access
+revocation while editing; the rejected save preserved its draft. Invitation
+acceptance itself was checked over HTTP, not the browser fragment flow.
+
+Local browser checks covered project creation, source/evidence entry, layout save
+and reload, explicit comparison/recovery of a conflicting unsaved draft, and ten
+mobile sections at 390px with no horizontal overflow. These checks do not establish
+real microphone, screen-reader, live model, or every keyboard/drag interaction.
+
+Production checks passed public page/sign-in rendering, anonymous and forged
+identity rejection, unauthenticated foreign-origin write rejection, exact asset
+comparison, deployment/schema inspection, routing and secret-binding preservation.
+The unauthenticated project write returns 401 before origin evaluation; authenticated
+foreign-origin rejection was verified locally. Production browser reached Clerk
+sign-in. No authenticated production project mutation was tested or performed.
+
+### Data impact and remaining work
+
+Staging changed from four sessions to seven because three fictional projects were
+created, archived and purged; their empty accounting tombstones remain. Its existing
+one demo and zero approvals remain. Synthetic Clerk identities/sessions and R2
+originals were cleaned up. Production remains eight sessions, zero demos and zero
+approvals; no production fixture or content mutation occurred. Routing still maps
+`mirai.party` to `mirai-production`, with the same D1 and secret binding names.
+
+This project collaboration task made no paid discovery calls, ledger resets, cap
+changes, DNS changes or legacy Sites migration. A later read-only accounting check
+at 11:59 UTC observed staging 2 attempts/$0.027045 and production 18 attempts/
+$0.151011. Production activity increased since the earlier adaptive release; it
+was not generated by this task. Reservations remain retained in the ledger. Last configured discovery caps remain $0.25/session and
+$1/database lifetime. Secret values cannot be read through settings inspection;
+deployment preserved them with `--keep-vars`. Safe live reports are
+`live-before.json`, `live-after.json`, `staging-check.json`, `production-check.json`
+and `accounting-check.json` under ignored `outputs/project-collaboration/`.
+
+Rollback must preserve new project authorization and accounting guards once project
+records exist. Do not blindly restore an older Worker without those guards, replay
+migration SQL or delete the new tables/buckets. Prefer a compatible forward fix;
+restoring a database also needs reconciliation with R2 and retained spending.
+
+The BDO product is still a separate pending workstream. Its
+[source review](../specs/0003-bdo-kpo-contract-validation.md) and
+[prepared intake](../scope/bdo-project-intake.json) are local discovery drafts.
+Production owner sign-in, actual friend identity/original messages/PDF/image,
+repository confirmation, secure BDO test credential reference and agency hosting
+context remain needed. There is no BDO project import, final readiness-approved
+brief, application repository, Worker spike, integration, demo, approval or pilot
+from this release. Sending real invitations and BDO staging/production releases
+retain their separate authorization requirements.
+
+## Historical adaptive discovery release, 2026-09-12
+
+Deployed after explicit operator authorization to validate and publish if green.
+[Design and acceptance criteria](../specs/0001-adaptive-discovery.md)
+record the constrained agent loop: source extraction, gap assessment, next question
+planning and client review, within ten saved answers. Closing checklists address
+previously asked but unresolved topics. Explicit resume supports old eight-answer
+reviews without resetting counts or issuing a provider call. Operator confirmation
+now explains blocking gaps, and still gates build export.
+
+Source base: `2327b343721f3979c33d869db96f932c12d285b3` plus the current discovery
+working changes. SHA256 over the sorted five implementation paths, each followed
+by NUL, file bytes and NUL:
+`72d7e7ae698bb0473a1a4704c80e734ba9838c3657d1e3245e65f7c04c873d46`.
+Paths: `app/discovery-observer.tsx`, `app/s/discovery-client.tsx`,
+`lib/discovery-provider.ts`, `lib/discovery-service.ts`, `lib/discovery.ts`.
+The sanitized source archive is `outputs/adaptive-release-20260912-source.tar.gz`,
+SHA256 `ca5ce628e04f42250127f92a0d34ce52ae39d5cb4adab608f250757f152eec77`.
+It preserves the exact application source including existing `app/modern-ui.css`;
+final release-record edits are documentation-only. No Git commit or remote push
+was performed. Do not publish ignored outputs wholesale.
+
+| Target | Active Worker version | Pre-release rollback version |
+| --- | --- | --- |
+| Staging | `869bb641-24cc-4845-9ae0-94e62bc55659` | `d96db145-a4c0-4759-adba-f8d3c83eb757` |
+| Production | `56266bde-b313-4994-ab0e-91486202fd58` | `4ba688c9-576e-466a-a0e3-00bb8ae47689` |
+
+Both isolated builds excluded local environment files and used their current
+matching public Clerk keys (staging test, production live). Checked staging and
+production overlays were deployed with `--keep-vars`. Live Clerk/session asset
+bytes match their build artifacts. Production assets: `clerk-provider-RxPyUlvn.js`
+and `session-DyuU6PJN.js`; Clerk asset SHA256
+`5fd959161be70bafb45a131b3ab14a42c0fd274eac78e8c75f0e9521bffaac19`.
+
+Local verification: typecheck and build pass; lint has four existing unrelated
+warnings. Discovery service tests pass, including English/Polish closing prompts,
+the old review resume path, ten-answer closure with original plus clarification
+quotes, idempotency, budgets, isolation, processing recovery and concurrency.
+Discovery HTTP, route deadline, lifecycle smoke and attach blocker checks pass.
+HTTP fixtures use a separate temporary checkout and local D1 with fictional data,
+no provider key and no production records. The paid smoke dry run also passes.
+
+Browser checks on the isolated localhost preview: Polish start, explicit finish,
+resume, topic save, summary review, and a 390px viewport with no horizontal overflow.
+The optional Playwright simulation suite was updated but not run because Playwright
+is not installed. This does not establish real microphone or live model quality.
+
+Authorized live Terra validation made exactly two attempts in isolated in-memory
+databases, with a $0.25 run cap and no retries: English acknowledgement 17ms,
+synthesis 7,876ms, $0.013143; Polish acknowledgement 3ms, synthesis 12,009ms,
+$0.017469. Total $0.030612. Both evidence/readiness checks passed; missing evidence
+remained blocked and sufficient coverage did not auto-confirm readiness. Safe
+report: `outputs/discovery-paid-smoke-adaptive-release-20260912.json`.
+
+Hosted staging lifecycle passed: one fictional old-eight-answer review resumed
+through authenticated client HTTP without a paid call, preserved answer count,
+returned the closing checklist, handled duplicate/stale revisions, finished
+without readiness confirmation, and persisted a topic edit. Its invitation was
+revoked and then returned 404. Staging sessions changed 3 → 4; demos stayed 1,
+approvals 0. Production stayed at 8 sessions, 0 demos and 0 approvals. No
+production fixture or product-data mutation was performed.
+
+Both hosts passed anonymous/forged owner rejection (401), absent/invalid client
+bearer rejection (404), and public page checks (200). Production additionally
+passed foreign-origin write rejection (403); production sign-in rendered the
+Clerk form in the browser. No authenticated production journey or real microphone
+test was performed. The two live model cases are not a ten-turn live evaluation.
+
+After deployment, routing still maps `mirai.party` to `mirai-production`; both D1
+bindings and schemas are unchanged. No migration, DNS change, new runtime secret,
+cap increase or ledger reset. Hosted usage remained staging 2 attempts/$0.027045,
+production 8 attempts/$0.048519. Existing secret bindings were preserved; secret
+values are not readable through the settings API. Last configured caps remain
+$0.25/session and $1/database lifetime accounting. Longer interviews consume
+those caps; unknowns and provider failures can still leave gaps. Existing client
+reviews do not reopen automatically: the client explicitly resumes through their
+existing invitation while turns remain. Operator confirmation still requires
+sufficient evidence. The unrelated `.cursor/` and presentation work remain intact.
 
 ## Current environments
 
@@ -29,7 +275,7 @@ unless its matching session actually exists there. Do not print or commit bearer
 current production deployment target. Honor explicit Cloudflare release intent;
 use `deploy/production.json` or `deploy/staging.json` for the chosen Worker.
 
-## Released artifact and data
+## Historical released artifact and data — 2026-09-11
 
 Application source: `704cb9722ffbf151b760d58876cc20e780b0a82d`, based on
 `6fb7e8cf5d0de5fa247b9876fa407339ca618055`. The release includes the tested working
@@ -78,7 +324,7 @@ Both current Workers use these server-side runtime settings:
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Matching Clerk instance, inlined at build time                              |
 
 The workspace cap is lifetime accounting across all sessions in one D1 database.
-Production's pre-release accounted usage was $0.130917, already included in its
+The historical 2026-09-11 pre-release accounted usage was $0.130917, already included in its
 $1 limit. Staging's two hosted checks accounted for $0.027045. Unknown provider
 usage retains the full pre-call reservation. Application maxima are $1/session
 and $2/database; runtime settings can lower them but cannot raise them.
@@ -111,7 +357,7 @@ review without another provider call. Polling stops after 45 seconds or a bounde
 read failure and offers refresh/form recovery. Original answers remain saved;
 reusing the request ID does not pay again.
 
-Interview questions stop after eight saved answers, on explicit finish or on
+Interview questions stop after ten saved answers, on explicit finish or on
 sufficient sourced coverage. Gaps remain visible. The operator still confirms
 readiness; this is never demo approval. Browser voice requires explicit action,
 keeps a transcript editable before sending, and stores no raw audio in Mirai.

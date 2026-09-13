@@ -115,6 +115,8 @@ export async function PATCH(request: Request) {
   try {
     const m = mutation.parse(await body(request));
     const s = await ownedSession(m.id);
+    if (await database().prepare("SELECT project_id FROM project_metadata WHERE project_id = ?").bind(s.id).first())
+      throw new ApiError(409, "Use the project workspace for this project's invitations, versions and lifecycle.");
     if (m.action === "confirm-discovery") {
       try {
         await save(s, confirmDiscovery(s, m.revision));
@@ -143,13 +145,16 @@ export async function PATCH(request: Request) {
           409,
           "This session changed in another window. Refresh and try again.",
         );
-      await database().batch([
-        database().prepare("DELETE FROM demo_states WHERE session_id = ?").bind(s.id),
+      const guard = "EXISTS (SELECT 1 FROM sessions WHERE id = ? AND revision = ?)";
+      const result = await database().batch([
+        database().prepare(`DELETE FROM demo_states WHERE session_id = ? AND ${guard}`).bind(s.id, s.id, m.revision),
+        database().prepare(`INSERT INTO discovery_retired_usage (id,accounted_microusd,created_at) SELECT ?,COALESCE(SUM(COALESCE(charged_microusd,reserved_microusd)),0),? FROM discovery_requests WHERE session_id = ? HAVING ${guard}`).bind(crypto.randomUUID(), new Date().toISOString(), s.id, s.id, m.revision),
         database()
-          .prepare("DELETE FROM discovery_requests WHERE session_id = ?")
-          .bind(s.id),
-        database().prepare("DELETE FROM sessions WHERE id = ?").bind(s.id),
+          .prepare(`DELETE FROM discovery_requests WHERE session_id = ? AND ${guard}`)
+          .bind(s.id, s.id, m.revision),
+        database().prepare("DELETE FROM sessions WHERE id = ? AND revision = ?").bind(s.id, m.revision),
       ]);
+      if (!result.at(-1)?.meta.changes) throw new ApiError(409, "Session changed; reload before deleting.");
       return json({ deleted: true });
     }
     if (!isDiscoveryComplete(s))

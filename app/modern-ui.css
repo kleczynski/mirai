@@ -1,0 +1,522 @@
+:root {
+  --mirai-ink: #111827;
+  --mirai-ink-soft: #51617f;
+  --mirai-accent-1: #4f46e5;
+  --mirai-accent-2: #06b6d4;
+  --mirai-accent-3: #8b5cf6;
+  --mirai-bg-1: #f5f7ff;
+  --mirai-bg-2: #f6f5ff;
+  --mirai-card: rgba(255, 255, 255, 0.66);
+  --mirai-border: rgba(76, 90, 130, 0.17);
+  --mirai-glass: rgba(255, 255, 255, 0.66);
+}
+
+.mirai-modern {
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 700px at 86% -12%, #dbeafe 0%, transparent 58%),
+    radial-gradient(840px 560px at -8% 102%, #ede9fe 0%, transparent 50%),
+    radial-gradient(660px 420px at 110% 112%, #dbeafe 0%, transparent 46%),
+    var(--mirai-bg-1);
+  color: var(--mirai-ink);
+  overflow-x: hidden;
+}
+
+.mirai-modern::before,
+.mirai-modern::after {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(46px);
+  opacity: 0.36;
+}
+
+.mirai-modern::before {
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  left: -150px;
+  top: -120px;
+  background: radial-gradient(
+    circle at center,
+    rgba(79, 70, 229, 0.55),
+    rgba(79, 70, 229, 0)
+  );
+  animation: ui-float 12s ease-in-out infinite alternate;
+}
+
+.mirai-modern::after {
+  width: 430px;
+  height: 430px;
+  border-radius: 50%;
+  right: -120px;
+  bottom: 5%;
+  background: radial-gradient(
+    circle at center,
+    rgba(139, 92, 246, 0.42),
+    rgba(139, 92, 246, 0)
+  );
+  animation: ui-float 15s 1.5s ease-in-out infinite alternate-reverse;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.mirai-modern [class],
+.mirai-modern button,
+.mirai-modern input,
+.mirai-modern textarea,
+.mirai-modern select {
+  font-family: inherit;
+}
+
+.mirai-modern .mirai-sidebar [data-slot="sidebar-inner"] {
+  background: linear-gradient(
+    130deg,
+    rgba(252, 254, 255, 0.85),
+    rgba(243, 247, 255, 0.86)
+  );
+  border-right: 1px solid var(--mirai-border);
+  backdrop-filter: blur(16px);
+}
+
+.mirai-modern .main-shell {
+  position: relative;
+}
+
+.mirai-modern .main-shell::before,
+.mirai-modern .client-main::before,
+.mirai-modern .demo-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.33),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid var(--mirai-border);
+  z-index: 0;
+}
+
+.mirai-modern .workspace-main,
+.mirai-modern .client-main,
+.mirai-modern .demo-main,
+.mirai-modern .client-demo {
+  position: relative;
+  z-index: 1;
+}
+
+.mirai-modern .workspace-main,
+.mirai-modern .client-main,
+.mirai-modern .demo-main,
+.mirai-modern .discovery-chat,
+.mirai-modern .question-card,
+.mirai-modern .client-demo,
+.mirai-modern .client-history,
+.mirai-modern .demo-toolbar,
+.mirai-modern .demo-title,
+.mirai-modern .demo-panel,
+.mirai-modern .panel {
+  animation: ui-panel-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mirai-modern .topbar,
+.mirai-modern .page-heading,
+.mirai-modern .welcome-panel,
+.mirai-modern .template-grid,
+.mirai-modern .pipeline,
+.mirai-modern .detail-grid,
+.mirai-modern .session-list,
+.mirai-modern .demos,
+.mirai-modern .history {
+  position: relative;
+  z-index: 1;
+}
+
+.mirai-modern .topbar {
+  background: color-mix(in srgb, var(--mirai-glass) 62%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom-color: var(--mirai-border);
+}
+
+.mirai-modern .workspace-main {
+  padding-top: 40px;
+}
+
+.mirai-modern .panel,
+.mirai-modern .demo-panel,
+.mirai-modern .session-row,
+.mirai-modern .template-card,
+.mirai-modern .demo-version,
+.mirai-modern .import-summary,
+.mirai-modern .question-card,
+.mirai-modern .client-message,
+.mirai-modern .telegram-record {
+  background: var(--mirai-glass) !important;
+  backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid var(--mirai-border);
+  box-shadow:
+    0 20px 45px rgba(15, 23, 42, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.mirai-modern .panel,
+.mirai-modern .demo-panel,
+.mirai-modern .question-card,
+.mirai-modern .client-demo,
+.mirai-modern .welcome-panel,
+.mirai-modern .session-row,
+.mirai-modern .template-card {
+  transition:
+    transform 0.28s ease,
+    border-color 0.28s ease,
+    box-shadow 0.28s ease;
+}
+
+.mirai-modern .panel:hover,
+.mirai-modern .demo-panel:hover,
+.mirai-modern .template-card:hover,
+.mirai-modern .session-row:hover {
+  transform: translateY(-3px);
+  border-color: rgba(79, 70, 229, 0.25);
+  box-shadow:
+    0 22px 46px rgba(79, 70, 229, 0.13),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.mirai-modern .button,
+.mirai-modern .button.secondary,
+.mirai-modern .text-button,
+.mirai-modern .file-row .text-button {
+  border-radius: 10px;
+}
+
+.mirai-modern .button {
+  background: linear-gradient(135deg, #5b5fff 0%, #4f46e5 100%);
+  border: 1px solid rgba(79, 70, 229, 0.22);
+  color: #fff;
+  box-shadow:
+    0 8px 20px rgba(79, 70, 229, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.mirai-modern .button::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    130deg,
+    transparent,
+    rgba(255, 255, 255, 0.22),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 0.55s ease;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.mirai-modern .button:hover::after {
+  transform: translateX(100%);
+  opacity: 1;
+}
+
+.mirai-modern .button.secondary {
+  background: color-mix(in srgb, white 82%, transparent);
+  color: #374151;
+}
+
+.mirai-modern .button:hover {
+  transform: translateY(-1px);
+}
+
+.mirai-modern .text-button {
+  color: var(--mirai-accent-1);
+}
+
+.mirai-modern .text-button:hover {
+  color: #3730a3;
+}
+
+.mirai-modern .template-card {
+  border-radius: 16px;
+}
+
+.mirai-modern .template-card::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 11px;
+  pointer-events: none;
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+  z-index: 0;
+}
+
+.mirai-modern .template-card,
+.mirai-modern .template-card * {
+  position: relative;
+  z-index: 1;
+}
+
+.mirai-modern .pipeline,
+.mirai-modern .detail-pipeline,
+.mirai-modern .session-row,
+.mirai-modern .template-grid,
+.mirai-modern .discovery-table tbody tr,
+.mirai-modern .supplier-comparison > label,
+.mirai-modern .stock-item,
+.mirai-modern .dental-layout > section,
+.mirai-modern .piece-legend,
+.mirai-modern .workspace-footer,
+.mirai-modern .client-footer,
+.mirai-modern .demo-feedback {
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.mirai-modern .pipeline > div.done span {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.mirai-modern .session-row {
+  backdrop-filter: blur(12px);
+}
+
+.mirai-modern .session-row .template-icon {
+  border-radius: 12px;
+}
+
+.mirai-modern .detail-grid {
+  gap: 20px;
+}
+
+.mirai-modern .discovery-chat {
+  isolation: isolate;
+}
+
+.mirai-modern .discovery-chat .host-message {
+  margin-bottom: 4px;
+}
+
+.mirai-modern .client-message,
+.mirai-modern .host-message {
+  border-radius: 14px;
+}
+
+.mirai-modern .client-message {
+  margin-left: 52px;
+}
+
+.mirai-modern .interview-active {
+  border-radius: 18px;
+  box-shadow: 0 22px 50px rgba(52, 55, 75, 0.1);
+}
+
+.mirai-modern .interview-processing {
+  border-radius: 12px;
+  background: linear-gradient(90deg, #ecf0ff, #ecfcff 45%, #eef7ff);
+}
+
+.mirai-modern .brand,
+.mirai-modern .brand span,
+.mirai-modern .brand-mark {
+  letter-spacing: -0.06em;
+}
+
+.mirai-modern .brand-mark {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.mirai-modern .mirai-dialog {
+  border: 1px solid var(--mirai-border);
+  background: color-mix(in srgb, white 92%, transparent) !important;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 30px 75px rgba(15, 23, 42, 0.18);
+}
+
+.mirai-modern .mirai-dialog [data-slot="dialog-content"] {
+  background: transparent;
+}
+
+.mirai-modern .error-box,
+.mirai-modern .error-text {
+  border-radius: 10px;
+}
+
+.mirai-modern .question-card,
+.mirai-modern .interview-active.question-card,
+.mirai-modern .client-demo,
+.mirai-modern .demo-disclosure,
+.mirai-modern .review-draft,
+.mirai-modern .import-summary,
+.mirai-modern .client-intro > p,
+.mirai-modern .meta,
+.mirai-modern .client-message .meta,
+.mirai-modern .review-gaps {
+  border-radius: 14px;
+}
+
+.mirai-modern .demo-page {
+  background: transparent;
+}
+
+.mirai-modern .demo-header {
+  border-radius: 0 0 18px 18px;
+  background: color-mix(in srgb, white 80%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.mirai-modern .demo-header .demo-badge {
+  border-radius: 999px;
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  background: linear-gradient(130deg, #eef2ff, #f5f3ff);
+}
+
+.mirai-modern .demo-panel,
+.mirai-modern .demo-feedback,
+.mirai-modern .retail .order-summary,
+.mirai-modern .stock-item {
+  border-radius: 16px;
+}
+
+.mirai-modern .board-wrap svg {
+  border-radius: 12px;
+}
+
+.mirai-modern .dental .clinical-review,
+.mirai-modern .retail .stock-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.mirai-modern .dental .clinical-review::before,
+.mirai-modern .retail .stock-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), transparent);
+}
+
+.mirai-modern .workspace-main,
+.mirai-modern .client-main,
+.mirai-modern .demo-main {
+  animation: ui-page-enter 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mirai-modern .pipeline > div,
+.mirai-modern .template-card,
+.mirai-modern .session-row,
+.mirai-modern .panel,
+.mirai-modern .demo-panel,
+.mirai-modern .question-card,
+.mirai-modern .client-demo,
+.mirai-modern .demo-version {
+  animation: ui-lift 0.46s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes ui-page-enter {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes ui-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-lift {
+  from {
+    transform: translateY(10px) scale(0.995);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ui-float {
+  from {
+    transform: translateY(0px);
+  }
+  to {
+    transform: translateY(15px);
+  }
+}
+
+@media (max-width: 900px), (hover: none), (pointer: coarse) {
+  .mirai-modern .main-shell::before,
+  .mirai-modern .mirai-sidebar [data-slot="sidebar-inner"],
+  .mirai-modern .topbar,
+  .mirai-modern .panel,
+  .mirai-modern .demo-panel,
+  .mirai-modern .template-card,
+  .mirai-modern .session-row,
+  .mirai-modern .button,
+  .mirai-modern .text-button,
+  .mirai-modern .question-card,
+  .mirai-modern .demo-page .demo-panel,
+  .mirai-modern .discovery-chat .host-message,
+  .mirai-modern .interview-processing {
+    transition: none !important;
+  }
+
+  .mirai-modern .panel,
+  .mirai-modern .demo-panel,
+  .mirai-modern .template-card,
+  .mirai-modern .session-row,
+  .mirai-modern .mirai-sidebar [data-slot="sidebar-inner"],
+  .mirai-modern .topbar,
+  .mirai-modern .demo-header,
+  .mirai-modern .mirai-dialog,
+  .mirai-modern .question-card {
+    backdrop-filter: blur(6px);
+  }
+
+  .mirai-modern .panel:hover,
+  .mirai-modern .demo-panel:hover,
+  .mirai-modern .template-card:hover,
+  .mirai-modern .session-row:hover,
+  .mirai-modern .button:hover {
+    transform: none;
+  }
+
+  .mirai-modern .button::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mirai-modern *,
+  .mirai-modern *::before,
+  .mirai-modern *::after,
+  .mirai-modern::before,
+  .mirai-modern::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

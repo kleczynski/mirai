@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { SessionData } from "./model";
 
-export const DISCOVERY_PROMPT_VERSION = "4";
-export const MAX_DISCOVERY_ANSWERS = 8;
+export const DISCOVERY_PROMPT_VERSION = "5";
+export const MAX_DISCOVERY_ANSWERS = 10;
 export const topicKeys = [
   "context",
   "pain_or_idea",
@@ -42,7 +42,7 @@ export type DiscoveryTurn = {
   createdAt: string;
   topic?: DiscoveryTopic;
   supersedes?: string[];
-  kind?: "answer" | "correction" | "topic_edit" | "finish";
+  kind?: "answer" | "correction" | "topic_edit" | "finish" | "resume";
   meta?: TurnMeta;
 };
 export type Discovery = {
@@ -109,6 +109,15 @@ export function answeredQuestions(d: Discovery) {
 export function interviewComplete(d: Discovery) {
   return (
     !!d.interview || answeredQuestions(d) >= MAX_DISCOVERY_ANSWERS || evidenceReady(d)
+  );
+}
+export function canResumeInterview(d: Discovery) {
+  return (
+    interviewComplete(d) &&
+    answeredQuestions(d) < MAX_DISCOVERY_ANSWERS &&
+    !evidenceReady(d) &&
+    d.processing?.status !== "pending" &&
+    allowedQuestions({ ...d, interview: undefined }, "custom").length > 0
   );
 }
 export function isFinishIntent(text: string) {
@@ -301,7 +310,7 @@ export function initialDiscovery(s: SessionData, now: string): Discovery {
     );
   d.transcript.push(
     hostTurn(
-      first === "context" ? greeting(s.language) : hostQuestions[first][s.language],
+      first === "context" ? greeting(s.language) : questionText(first, d, s.language),
       now,
       first,
     ),
@@ -333,8 +342,23 @@ export function hostTurn(
   };
 }
 
-// A reviewed, single-intent question library makes pacing enforceable independently of model output.
+// Reviewed questions and closing checklists keep pacing independent of model output.
 export const hostQuestions = {
+  checkpoint: {
+    topic: "success_criteria",
+    en: "Let's complete the first-demo brief. Please answer the remaining items below in one message. Approximate numbers are fine; say if something is unknown.",
+    pl: "Uzupełnijmy opis pierwszego demo. Odpowiedz na pozostałe punkty poniżej w jednej wiadomości. Liczby mogą być przybliżone; napisz, jeśli czegoś jeszcze nie wiesz.",
+  },
+  clarify: {
+    topic: "success_criteria",
+    en: "A few details are still unclear. Please make these concrete, using one example you could try in the first demo:",
+    pl: "Kilka szczegółów nadal wymaga doprecyzowania. Opisz je na jednym przykładzie, który możesz sprawdzić w pierwszym demo:",
+  },
+  final_check: {
+    topic: "success_criteria",
+    en: "This is the last clarification. Please fill in the points below, or say what you cannot decide yet. Unanswered details will stay visible for your host.",
+    pl: "To ostatnie doprecyzowanie. Uzupełnij punkty poniżej lub napisz, czego nie możesz jeszcze ustalić. Brakujące szczegóły pozostaną widoczne dla gospodarza.",
+  },
   evaluation: {
     topic: "success_criteria",
     en: "How will you evaluate success on a defined sample against a reviewed reference, counting both correct and failed results?",
@@ -397,8 +421,8 @@ export const hostQuestions = {
   },
   example: {
     topic: "tools_data",
-    en: "Use fictional data only, without passwords or real customer or patient records. What would one example input look like?",
-    pl: "Użyj tylko fikcyjnych danych, bez haseł i prawdziwych danych klientów lub pacjentów. Jak wyglądałby jeden przykładowy zestaw danych wejściowych?",
+    en: "Use fictional data only, without passwords or real customer or patient records. What input would you provide, from which current tool, and what output should the demo return?",
+    pl: "Użyj tylko fikcyjnych danych, bez haseł i prawdziwych danych klientów lub pacjentów. Jakie dane wejściowe podasz, z jakiego obecnego narzędzia, i jaki wynik ma zwrócić demo?",
   },
   success: {
     topic: "success_criteria",
@@ -460,11 +484,11 @@ export function allowedQuestions(
     problem,
     "path",
     "workflow",
-    "frequency",
     "example",
     "success",
-    "constraints",
     "delivery",
+    "constraints",
+    "frequency",
   ];
   const candidates = order.filter(
     (id) =>
@@ -478,7 +502,41 @@ export function allowedQuestions(
     candidates.unshift("evaluation");
   if (blockers.some((b) => b.topic === "constraints") && !asked.has("safeguards"))
     candidates.unshift("safeguards");
+  const remaining = MAX_DISCOVERY_ANSWERS - answeredQuestions(d);
+  // Reserve closure for unresolved evidence, including topics already asked.
+  // A checklist covers every remaining topic even when too few turns remain.
+  if (gaps.size && ((remaining <= 3 && gaps.size >= remaining) || !candidates.length)) {
+    const closing = (["checkpoint", "clarify", "final_check"] as const).find(
+      (id) => !asked.has(id),
+    );
+    if (closing) return [closing];
+  }
   return candidates;
+}
+export function questionText(id: QuestionId, d: Discovery, language: "en" | "pl") {
+  if (!["checkpoint", "clarify", "final_check"].includes(id))
+    return hostQuestions[id][language];
+  const guidance: Record<DiscoveryTopic, QuestionId> = {
+    context: "context",
+    pain_or_idea: d.path === "creative" ? "idea" : "task",
+    path: "path",
+    workflow: "workflow",
+    frequency_impact: "frequency",
+    tools_data: "example",
+    success_criteria: "success",
+    constraints: "constraints",
+    delivery: "delivery",
+  };
+  return [
+    hostQuestions[id][language],
+    ...openGaps(d).map((topic, index) => {
+      const blockers = evidenceBlockers(d).filter((b) => b.topic === topic);
+      const detail = blockers.length
+        ? blockers.map((b) => b[language]).join(" ")
+        : hostQuestions[guidance[topic]][language];
+      return `${index + 1}. ${topicLabels[topic][language]}: ${detail}`;
+    }),
+  ].join("\n\n");
 }
 const updateSchema = z
   .object({
@@ -594,15 +652,15 @@ export function applyModelOutput(
     "suggestedCompleteness" in out
       ? out.suggestedCompleteness
       : 1 - openGaps(next).length / requiredTopics(next).length;
+  if (evidenceReady(next)) return finishInterview(next, now, s.language, "coverage");
   if (answeredQuestions(next) >= MAX_DISCOVERY_ANSWERS)
     return finishInterview(next, now, s.language, "answer_limit");
-  if (evidenceReady(next)) return finishInterview(next, now, s.language, "coverage");
   const questionId = allowedQuestions(next, s.template)[0];
   if (!questionId) return finishInterview(next, now, s.language, "questions_exhausted");
   next.transcript.push({
     id: crypto.randomUUID(),
     role: "assistant",
-    text: hostQuestions[questionId][s.language],
+    text: questionText(questionId, next, s.language),
     createdAt: now,
     meta: { ...meta, questionId },
   });

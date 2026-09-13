@@ -1,0 +1,122 @@
+{
+  "status": "Historical prepared intake below; current production project is at scope 2 and demo review version 1. Expert feedback and demo approval remain pending.",
+  "project": {
+    "title": "BDO KPO automation MVP",
+    "origin": "collaborator",
+    "introducedBy": "David",
+    "language": "pl"
+  },
+  "evidence": [
+    {
+      "title": "Owner requirements: agency and client responsibilities",
+      "section": "Problem and users",
+      "kind": "claim",
+      "sourceType": "owner_note",
+      "content": "The owner requests an MVP for environmental agencies. Agency preparers create drafts; authorized client approvers control consequential BDO actions. This records the owner's supplied requirements, not testimony from the friend or legal authorization."
+    },
+    {
+      "title": "Owner requirements: first-demo scope",
+      "section": "MVP scope",
+      "kind": "decision",
+      "sourceType": "owner_note",
+      "content": "Separate application and repository; official BDO 2027 test API only. Sender lifecycle: local draft, client review, planned creation/editing, approval, official confirmation generation/download, withdrawal, rejected-card revision and status observation. Receiver/transporter actions remain in BDO. Excludes production submissions, annual reporting, KEO, billing, field-worker accounts and true offline PWA. These settled requirements still need explicit project review before readiness."
+    },
+    {
+      "title": "Official 2027 integrator announcement",
+      "section": "Sources and evidence",
+      "kind": "reference",
+      "sourceType": "external_reference",
+      "referenceUrl": "https://bdo.mos.gov.pl/news/informacja-dla-integratorow-api-bdo-zmiany-w-ewidencji-odpadow-od-2027-r/",
+      "content": "Retrieved 2026-09-12. The official announcement states an effective date of 2027-01-01 and links the workbook and test Swagger. See docs/specs/0003-bdo-kpo-contract-validation.md for source identity and validation limits. This is agent-recorded source inspection, not collaborator testimony."
+    },
+    {
+      "title": "Official API change workbook",
+      "section": "Sources and evidence",
+      "kind": "reference",
+      "sourceType": "external_reference",
+      "referenceUrl": "https://bdo.mos.gov.pl/wp-content/uploads/2026/08/Zmiany-API-ewidencja-v2.xlsx",
+      "content": "Retrieved 2026-09-12. KPO sheet contains 18 operation rows including transport-mode fields and structured withdrawal/rejection reasons. SHA256 ea25bf1dca115f77f77b12f4bc3437f8faa9ae951f1a826f466416faf318ec20. Published contract correspondence does not establish authenticated runtime behavior."
+    },
+    {
+      "title": "Published test Swagger contract",
+      "section": "Sources and evidence",
+      "kind": "reference",
+      "sourceType": "external_reference",
+      "referenceUrl": "https://test-bdo.mos.gov.pl/api/swagger/v1/swagger.json",
+      "content": "Retrieved 2026-09-12: 199 paths, contract labeled v1. Transport-mode and withdrawal fields correspond to the change workbook. SHA256 bd7ee8a4b137403b469f97a158fcfe1715824c672b81a74d1183b61a395908a2. Resolve workbook path/method differences through the authorized Worker spike before fixing BdoKpoGateway2027."
+    },
+    {
+      "title": "Ambiguous create must block for reconciliation",
+      "section": "Risks and constraints",
+      "kind": "decision",
+      "sourceType": "owner_note",
+      "content": "Persist immutable commands, payload hashes, client confirmation, atomic claims, attempts and results before queue acknowledgement. Never blindly retry an ambiguous create. Retrieve known IDs to compare transition results; multiple candidates require manual review. Keep client credentials/data isolated outside Mirai. Do not claim exactly-once external execution."
+    },
+    {
+      "title": "Deployment architecture needs a real test-environment spike",
+      "section": "Open questions",
+      "kind": "open_question",
+      "sourceType": "agent_inference",
+      "content": "Can the official BDO test API authenticate and complete required reads from an agency-owned Worker without unsupported networking, certificates or fixed egress? Validate before choosing Workers versus an agency-owned container. No spike has run. Repository target, secure credential reference and hosting account remain unresolved."
+    },
+    {
+      "title": "Original collaborator evidence is missing",
+      "section": "Open questions",
+      "kind": "open_question",
+      "sourceType": "agent_inference",
+      "content": "The friend's original messages, PDF and image have not been supplied. Record their actual name and intended Clerk email; preserve originals and author attribution after receipt. Do not convert the owner's task description into invented collaborator evidence."
+    },
+    {
+      "title": "Pilot targets are not measurements",
+      "section": "Pilot evidence",
+      "kind": "claim",
+      "sourceType": "owner_note",
+      "content": "Target a two-week shadow pilot with at least 50% lower median KPO preparation time, zero duplicate creation and zero cross-client exposure. No baseline, pilot measurement, demo approval or client confirmation exists yet."
+    },
+    {
+      "title": "BDO portal",
+      "referenceUrl": "https://bdo.mos.gov.pl/",
+      "content": "Owner-supplied official portal reference. Initial web reader returned 403; specific announcement and published contract were separately retrieved. No authenticated portal workflow was exercised.",
+      "section": "Sources and evidence",
+      "kind": "reference",
+      "sourceType": "external_reference"
+    },
+    {
+      "title": "Historical KPO instruction",
+      "referenceUrl": "https://bdo.mos.gov.pl/wp-content/uploads/2020/01/instrukcja-karta-przekazania-odpad%C3%B3w.pdf",
+      "content": "Retrieved historical 32-page v1.0 instruction effective 2019-12-16. Historical workflow evidence only, not the 2027 API contract. This public source is not the missing original file supplied by the friend.",
+      "section": "Sources and evidence",
+      "kind": "reference",
+      "sourceType": "external_reference"
+    },
+    {
+      "title": "Industry KPO reference",
+      "referenceUrl": "https://kartaewidencji.pl/karta-przekazania-odpadu/",
+      "content": "Industry source identified in the owner-provided task as contributor-provided. Secondary context only; not official API or legal authority. Original collaborator message has not been received.",
+      "section": "Sources and evidence",
+      "kind": "reference",
+      "sourceType": "external_reference"
+    },
+    {
+      "title": "Test Swagger entry point",
+      "referenceUrl": "https://test-bdo.mos.gov.pl/api/swagger/index.html",
+      "content": "Official test documentation UI; its configuration references /api/swagger/v1/swagger.json. No authenticated BDO test calls were made.",
+      "section": "Sources and evidence",
+      "kind": "reference",
+      "sourceType": "external_reference"
+    }
+  ],
+  "projectUrl": "https://mirai.party/projects?id=f3bb6569-6c84-4e75-8210-aa0523f72bc8",
+  "currentMilestone": "Fictional expert demo published and attached as Mirai version 1. Collect actual expert feedback before tailoring, real BDO integration or agency pilot decisions.",
+  "reviewArtifact": {
+    "repositoryUrl": "https://github.com/kleczynski/mirai-bdo-kpo",
+    "repositoryVisibility": "private",
+    "demoUrl": "https://mirai-bdo-kpo-demo.kleczynski11312.workers.dev/",
+    "sourceCommit": "40dc3262b64501385f77c255d0b5a820726c9b2d",
+    "workerVersion": "9c68a383-f8e2-4996-be6e-6c9628599cc6",
+    "scopeVersion": 2,
+    "demoVersion": 1,
+    "approval": "pending",
+    "bdoIntegration": false
+  }
+}

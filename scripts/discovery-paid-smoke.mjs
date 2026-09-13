@@ -29,6 +29,10 @@ if (run && !/^[a-z0-9-]{1,40}$/.test(run))
   throw new Error("Invalid paid test run label.");
 const reportPath = root + `outputs/discovery-paid-smoke${run ? "-" + run : ""}.json`;
 const lockPath = root + "outputs/discovery-paid-smoke.lock";
+const runCapUsd = Number(process.env.MIRAI_PAID_TEST_CAP_USD ?? "0.25");
+if (!Number.isFinite(runCapUsd) || runCapUsd <= 0 || runCapUsd > 0.25)
+  throw new Error("Paid smoke run cap must be greater than zero and at most $0.25.");
+const runCapMicrousd = Math.floor(runCapUsd * 1e6);
 const cases = [
   {
     name: "english-camera",
@@ -44,7 +48,7 @@ const cases = [
 assert.equal(cases.length, 2);
 if (process.argv.includes("--dry-run")) {
   console.log(
-    "Ready: two fictional EN/PL cases, approved Terra, saved acknowledgement under 10s, background synthesis under 25s, cumulative $1 test budget, isolated SQLite, no automatic retries. No paid calls made.",
+    `Ready: two fictional EN/PL cases, approved Terra, saved acknowledgement under 10s, background synthesis under 25s, $${runCapUsd} run cap and cumulative $1 test budget, isolated SQLite, no automatic retries. No paid calls made.`,
   );
   process.exit(0);
 }
@@ -88,6 +92,7 @@ const report = {
   startedAt: new Date().toISOString(),
   model: DISCOVERY_MODEL,
   maxCalls: 2,
+  runCapMicrousd,
   environment: "local service with in-memory SQLite and live OpenAI",
   attempts: [],
 };
@@ -99,6 +104,7 @@ try {
     "0000_lucky_silver_sable.sql",
     "0001_tiny_pepper_potts.sql",
     "0002_polite_bucky.sql",
+    "0003_salty_giant_girl.sql",
   ])
     sqlite.exec(readFileSync(root + "drizzle/" + file, "utf8"));
   function statement(sql, values = []) {
@@ -134,7 +140,8 @@ try {
     enabled: true,
     apiKey: key,
     model: DISCOVERY_MODEL,
-    capMicrousd: 1_000_000,
+    capMicrousd: runCapMicrousd,
+    workspaceCapMicrousd: runCapMicrousd,
   };
   for (const fixture of cases) {
     const id = crypto.randomUUID();
@@ -180,6 +187,16 @@ try {
     const liveProvider = async (payload, apiKey, signal) => {
       if (report.attempts.length >= 2) throw new Error("paid_call_limit");
       const reservedMicrousd = reserveCost(payload);
+      const runSpent = report.attempts.reduce(
+        (sum, a) =>
+          sum +
+          (a.accounting?.chargedMicrousd ??
+            a.accounting?.reservedMicrousd ??
+            a.reservedMicrousd),
+        0,
+      );
+      if (runSpent + reservedMicrousd > runCapMicrousd)
+        throw new Error("paid_smoke_run_budget");
       const spent = readdirSync(root + "outputs")
         .filter((name) => /^discovery-paid-smoke(?:-[a-z0-9-]+)?\.json$/.test(name))
         .flatMap(

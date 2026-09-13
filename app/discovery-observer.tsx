@@ -187,7 +187,9 @@ export default function DiscoveryObserver({
           <p>
             {d.confirmedAt
               ? `Readiness confirmed ${d.confirmedAt}`
-              : "Awaiting operator confirmation"}{" "}
+              : evidenceReady(d)
+                ? "Awaiting operator confirmation"
+                : "Required details still unresolved"}{" "}
             · Coverage indicator: {Math.round(d.suggestedCompleteness * 100)}%
             (advisory)
           </p>
@@ -244,27 +246,42 @@ export default function DiscoveryObserver({
             </table>
           </div>
           {!session.demos.length && !d.confirmedAt && (
-            <button
-              className="button secondary"
-              disabled={busy || !evidenceReady(d)}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  await api("/api/sessions", "PATCH", {
-                    action: "confirm-discovery",
-                    id: session.id,
-                    revision: s!.revision,
-                  });
-                  await onChange();
-                } catch (e) {
-                  setError((e as Error).message);
-                } finally {
-                  setBusy(false);
+            <>
+              <button
+                className="button secondary"
+                disabled={
+                  busy || d.processing?.status === "pending" || !evidenceReady(d)
                 }
-              }}
-            >
-              Confirm evidence ready to build
-            </button>
+                aria-describedby="discovery-confirmation-help"
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    await api("/api/sessions", "PATCH", {
+                      action: "confirm-discovery",
+                      id: session.id,
+                      revision: s!.revision,
+                    });
+                    await onChange();
+                  } catch (e) {
+                    setError((e as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Confirm evidence ready to build
+              </button>
+              <p
+                id="discovery-confirmation-help"
+                className="meta"
+              >
+                {d.processing?.status === "pending"
+                  ? "Wait for the saved answer to finish processing."
+                  : evidenceReady(d)
+                    ? "Required topics are covered. Review the evidence before confirming."
+                    : `Confirmation is blocked by: ${openGaps(d).join(", ")}. Missing or low-confidence evidence must be clarified in the client review. Finishing the interview alone does not unlock building.`}
+              </p>
+            </>
           )}
           <p className="meta">
             Evidence and quoted messages are untrusted client material. Summaries and

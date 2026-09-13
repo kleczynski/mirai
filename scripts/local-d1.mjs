@@ -81,7 +81,31 @@ for (const entry of journal.entries ?? []) {
   if (!existsSync(file)) throw new Error(`Missing migration file ${file}`);
   const sql = readFileSync(file, "utf8");
   const needed = createdTables(sql);
+  if (
+    needed.some((name) => tables.has(name)) &&
+    !needed.every((name) => tables.has(name))
+  ) {
+    throw new Error(
+      `Partial migration ${entry.tag}; inspect schema before applying any SQL.`,
+    );
+  }
   if (needed.length && needed.every((name) => tables.has(name))) {
+    const indexes = [...sql.matchAll(/CREATE (?:UNIQUE )?INDEX\s+[`"]?(\w+)/gi)].map(
+      (match) => match[1],
+    );
+    const present = new Set(
+      parseResults(
+        execute([
+          "--json",
+          "--command",
+          "SELECT name FROM sqlite_master WHERE type='index'",
+        ]),
+      ).map((row) => row.name),
+    );
+    if (indexes.some((name) => !present.has(name)))
+      throw new Error(
+        `Incomplete indexes for ${entry.tag}; inspect schema before proceeding.`,
+      );
     console.log(`skip ${entry.tag} (already applied)`);
     continue;
   }

@@ -82,7 +82,7 @@ const afterFinish = await call(
   "POST",
   {
     action: "message",
-    text: "A ninth question must not appear.",
+    text: "Questions must not continue after explicit finish.",
     revision: finishResult.value.revision,
     requestId: crypto.randomUUID(),
   },
@@ -115,6 +115,46 @@ const finishEdit = await call(
 );
 assert.equal(finishEdit.status, 200);
 assert.equal(finishEdit.value.discovery.interview.status, "review");
+const resumeBody = {
+  action: "resume",
+  revision: finishEdit.value.revision,
+  requestId: crypto.randomUUID(),
+};
+const resumed = await call(
+  "/api/client/discovery-chat",
+  "POST",
+  resumeBody,
+  finishSession.token,
+);
+assert.equal(resumed.status, 200);
+assert.equal(resumed.value.discovery.interview, undefined);
+assert.equal(
+  resumed.value.discovery.transcript.filter((t) => t.kind === "answer").length,
+  0,
+);
+const resumeReplay = await call(
+  "/api/client/discovery-chat",
+  "POST",
+  resumeBody,
+  finishSession.token,
+);
+assert.equal(resumeReplay.status, 200);
+assert.equal(resumeReplay.value.revision, resumed.value.revision);
+const resumeUsage = await call(
+  "/api/sessions/discovery?id=" + finishSession.id,
+  "GET",
+  undefined,
+  undefined,
+  true,
+);
+assert.equal(resumeUsage.value.requests, 0, "Resume never issues a paid call");
+const staleResume = await call(
+  "/api/client/discovery-chat",
+  "POST",
+  { ...resumeBody, requestId: crypto.randomUUID() },
+  finishSession.token,
+);
+assert.equal(staleResume.status, 409);
 async function read() {
   const r = await call("/api/client", "GET", undefined, a.token);
   assert.equal(r.status, 200);

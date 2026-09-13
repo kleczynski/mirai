@@ -9,6 +9,7 @@ export default async function Home() {
     identity = (await owner()).email;
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) redirect("/sign-in");
+    if (e instanceof ApiError && e.status === 403) redirect("/projects");
     if (e instanceof ApiError) accessError = e.message;
   }
   return (

@@ -13,10 +13,13 @@ Cloudflare Workers with separate D1 databases and Clerk authentication.
 - [Future direction](docs/NORTH-STAR.md)
 
 Discovery chat is enabled on staging and production: saved answers, bounded
-background summaries, an eight-answer interview, direct topic editing and
+background summaries, an interview, direct topic editing and
 browser-supported voice input. Operator readiness confirmation and version-specific
 demo approval remain separate. Supabase and autonomous application builds are not
 implemented.
+
+The adaptive update released on 2026-09-12 adds up to ten answers, closing checklists
+and explicit review continuation on staging and production. See the operations runbook for release evidence.
 
 The original Sites host remains a separate legacy dataset:
 https://mirai-control-plane.wishfishdev.chatgpt.site. Its imported Telegram examples
@@ -33,3 +36,8 @@ publishing; production needs operator authorization.
 Hosted owner requests are Clerk-authorized on the server. Never trust public
 `oai-authenticated-user-*` headers. The starter's simulated Sites sign-in is only
 for loopback development when Clerk is unset; it is not hosted authentication.
+
+The project/collaboration extension is documented in
+[its scope](docs/scope/project-collaboration.md). `/projects` adds authenticated
+contributions and governed evidence canvases while preserving legacy client
+sessions. Check the operations runbook for the actual release state.

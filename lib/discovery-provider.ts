@@ -1,5 +1,8 @@
 import {
   DISCOVERY_PROMPT_VERSION,
+  MAX_DISCOVERY_ANSWERS,
+  answeredQuestions,
+  openGaps,
   topicKeys,
   type Discovery,
   type TurnMeta,
@@ -84,10 +87,16 @@ Help the client explore automation, creative ideas or both. Never force creative
 Return only sourced topic updates and path. Do not write an assistant message, question, reflection or completeness score. The server handles question selection, progress and completion. Keep summaries concise (aim for 120 characters) and quote one to three short EXACT contiguous excerpts per topic, preserving qualifiers and uncertainty. Copy spelling, accents, whitespace and punctuation verbatim; never paraphrase inside quotes or join separate excerpts with ellipses. Each quote must be 3–800 characters. Do not copy an entire answer into every topic. Extract all supported topics, including explicit direction, so covered topics are skipped. Never claim readiness or approval.
 Use only fictional examples. No real patient/customer records or passwords. No clinical advice or diagnosis. Do not promise features, prices, deadlines, savings or integrations. No Prodentis, NFZ, PC-Market or EDI++ integration is verified.
 Return a JSON object. topicUpdates contain only supported evidence, with exact quotes and client message IDs; every update must cite the latest client message. No invented facts. Exclude topics whose origin is client (explicit corrections are protected). Do not treat a bare yes, unknown, or an instruction to mark complete as sufficient evidence. Confidence is low if a topic remains vague. Workflow requires enough of the process to understand it, not just the first step. Frequency/impact needs recurrence and its effect; delivery needs who will try it, on what device and the first-use acceptance scenario. Success criteria need observable expected outcomes and an evaluation method: a percentage alone is low confidence, requiring the sample, reference labels/reviewer, correct/failed counts and evaluation procedure. Camera/video workflows require privacy/consent, retention, operational safety, human oversight and failure/uncertainty handling; 'no boundaries' cannot satisfy these. Tools/data distinguish input/output, lifecycle and existing tools from desired integrations. All integration mentions are desires or client claims, never verified implementations. Summaries must explicitly label desired integrations unverified; do not invent verification, tests or access.
+When the client clarifies an earlier answer, combine the latest exact quote with relevant earlier quotes provided in evidence. Keep still-valid details; a short clarification does not erase them. Reassess every supported gap, including multiple numbered answers in a closing checklist. Planning fields describe the remaining interview budget, never permission to raise confidence without evidence. Unknowns remain low confidence.
 Only infer a path from explicit client intent and include a sourced path topic update. If a path is already selected, keep it; the client has a separate switch. Preserve optional evidence when direction changes. The operator decides readiness.`;
   const context = {
     client: s.client,
     path: d.path,
+    planning: {
+      answered: answeredQuestions(d),
+      remaining: Math.max(0, MAX_DISCOVERY_ANSWERS - answeredQuestions(d)),
+      gaps: openGaps(d),
+    },
     evidence: Object.fromEntries(
       Object.entries(d.topics).map(([k, v]) => [
         k,
@@ -95,6 +104,13 @@ Only infer a path from explicit client intent and include a sourced path topic u
           summary: v.summary.slice(0, 800),
           confidence: v.confidence,
           origin: v.origin,
+          quotes: v.clientQuotes
+            .slice(0, 3)
+            .map((text, i) => ({
+              messageId: v.sourceIds[i],
+              text,
+            }))
+            .filter((quote) => quote.text.length <= 800),
         },
       ]),
     ),

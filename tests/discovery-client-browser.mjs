@@ -200,6 +200,16 @@ async function setup({
     }
     if (action.action === "finish")
       d.interview = { status: "review", reason: "client_finished", completedAt: now };
+    if (action.action === "resume") {
+      delete d.interview;
+      d.transcript.push(
+        assistant(
+          "resumed",
+          "Who will try the first demo, on which device, and what result should they see?",
+          "delivery",
+        ),
+      );
+    }
     if (action.action === "edit-message")
       d.transcript.push({
         id: `correction-${state.requests.length}`,
@@ -232,7 +242,7 @@ try {
   const { page, context, state } = await setup();
   assert.equal(
     await page.locator(".interview-count").innerText(),
-    "Question 1 of up to 8",
+    "Question 1 of up to 10",
   );
   assert.equal(
     await page.getByRole("button", { name: "Dictate answer" }).isDisabled(),
@@ -331,7 +341,7 @@ try {
     .waitFor();
   assert.equal(
     await page.locator(".interview-count").innerText(),
-    "Question 3 of up to 8",
+    "Question 3 of up to 10",
   );
   await page
     .getByLabel("Your message", { exact: true })
@@ -404,13 +414,11 @@ try {
   await vp.getByRole("button", { name: "Dictate answer" }).click();
   await vp.locator("[data-voice-state=listening]").waitFor();
   await vp.evaluate(() =>
-    window.voiceInstances
-      .at(-1)
-      .onresult({
-        results: [
-          { isFinal: false, 0: { transcript: "Fictional spoken workshop details." } },
-        ],
-      }),
+    window.voiceInstances.at(-1).onresult({
+      results: [
+        { isFinal: false, 0: { transcript: "Fictional spoken workshop details." } },
+      ],
+    }),
   );
   await vp.getByLabel("Live transcript").waitFor();
   assert.equal(voice.state.requests.length, 0);
@@ -472,7 +480,7 @@ try {
   findings.push("simulated stop-processing timeout restores typed input");
 
   const exhaustedSession = initial();
-  for (let i = 0; i < 8; i++)
+  for (let i = 0; i < 10; i++)
     exhaustedSession.discovery.transcript.push({
       id: `fictional-answer-${i}`,
       role: "client",
@@ -482,7 +490,9 @@ try {
     });
   const exhausted = await setup({ session: exhaustedSession, expectComposer: false });
   await exhausted.page
-    .getByRole("heading", { name: "Your starting point is ready to review." })
+    .getByRole("heading", {
+      name: "Your answers are saved. Some details are still open.",
+    })
     .waitFor();
   assert.equal(
     await exhausted.page
@@ -496,6 +506,26 @@ try {
     .getByRole("heading", { name: "Topic form", exact: true })
     .waitFor();
   await exhausted.context.close();
+  const resumableSession = structuredClone(exhaustedSession);
+  resumableSession.discovery.transcript = resumableSession.discovery.transcript.filter(
+    (t) => !["fictional-answer-8", "fictional-answer-9"].includes(t.id),
+  );
+  resumableSession.discovery.interview = {
+    status: "review",
+    reason: "answer_limit",
+    completedAt: now,
+  };
+  const resumable = await setup({ session: resumableSession, expectComposer: false });
+  await resumable.page
+    .getByRole("button", { name: "Continue clarification", exact: true })
+    .click();
+  await resumable.page.getByLabel("Your message", { exact: true }).waitFor();
+  assert.equal(
+    await resumable.page.locator(".interview-count").innerText(),
+    "Question 9 of up to 10",
+  );
+  assert.equal(resumable.state.requests.at(-1).action, "resume");
+  await resumable.context.close();
   const lockedSession = initial();
   lockedSession.demos = [
     {
@@ -542,7 +572,7 @@ try {
   );
   await imported.context.close();
   findings.push(
-    "eight-answer review without ninth composer, editable topic gaps, locked and imported read-only states",
+    "ten-answer review without eleventh composer, editable topic gaps, locked and imported read-only states",
   );
   const asyncInterview = await setup({ voice: "success" });
   const ap = asyncInterview.page;

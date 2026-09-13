@@ -1,10 +1,9 @@
-> Released to production and staging on 2026-09-11. Follow the [current operations runbook](production-new-clients.md) for active versions, hosts, caps and release evidence. Earlier paid-test notes below are historical.
+> Base discovery released on 2026-09-11; the adaptive planner update released to staging and production on 2026-09-12. Follow the [current operations runbook](production-new-clients.md) for active versions, hosts, caps and release evidence.
 
 # Discovery chat
 
-Implemented locally on 2026-09-11 and ported onto current `main`. Not deployed.
-Chat stays off on `mirai.party` (Sites), `mirai-staging`, and
-`mirai-production`. The operator approved Terra, no automatic model fallback, a
+Chat is enabled on production and staging Cloudflare Workers. The legacy
+Sites host is a separate dataset. The operator approved Terra, no automatic model fallback, a
 $1/session cap, parallel chat/form rollout, coverage plus operator
 confirmation, strict session language, compact owner observability, historical
 Telegram imports and the existing post-demo lock.
@@ -59,6 +58,7 @@ neither message text nor invitation tokens. Existing tables are not rewritten.
 - `{ action: "edit-message", messageId, text, revision, requestId }`
 - `{ action: "path", path, revision, requestId }`
 - `{ action: "finish", revision, requestId }`
+- `{ action: "resume", revision, requestId }`, a free explicit continuation while answer and clarification slots remain
 
 The endpoint returns the saved session and new revision. It rejects unknown
 properties, target session IDs and stale browser revisions. The legacy answer
@@ -81,29 +81,36 @@ loopback mock for localhost HTTP tests.
 
 Server-only OpenAI Responses API, model `gpt-5.6-terra`, reasoning `low`, structured
 JSON output, `store: false`, no tools, 2,000 output tokens, a 25-second background provider deadline and a 9.5-second acknowledgement route deadline.
-`DISCOVERY_PROMPT_VERSION = "4"` lives in `lib/discovery.ts`.
+`DISCOVERY_PROMPT_VERSION = "5"` lives in `lib/discovery.ts`.
 
 The model receives server instructions plus a separate untrusted JSON payload:
-client name, playbook, selected path, bounded topic summaries and six recent
+client name, playbook, selected path, bounded topic summaries with source quotes,
+remaining answer budget and open gaps, plus six recent
 messages with correction provenance. It returns only sourced topic updates and
 an optional inferred initial path. The server chooses questions and derives the
 advisory coverage indicator; no unused question, reflection or score is generated.
 Quotes must exactly match referenced client messages and each update must cite the
 latest message. Superseded original answers cannot be quoted as current evidence.
 
-Questions come from a bilingual reviewed library. The server applies sourced
-updates, then chooses an unanswered topic with missing evidence. A supplied
-answer may cover several topics. The model does not generate a conversational question;
-the server cannot publish a repeated question or a ninth question. A targeted evaluation
-or camera-safeguards follow-up can address a specific unresolved gap.
+Questions come from a bilingual reviewed library. After each synthesis the server
+replans from unresolved evidence, prioritizing first use and success. During the
+last three answer slots, if individual questions would exhaust the remaining budget,
+it assembles a closing checklist covering all current gaps. Three distinct closing
+prompts permit clarification of previously asked but vague topics. A supplied
+answer may cover several topics. The model combines latest and earlier sourced
+quotes but never decides readiness. Metric and camera safeguards remain enforced.
 
-The interview ends after at most eight saved conversational answers, earlier
+The interview ends after at most ten saved conversational answers, earlier
 when required evidence is sufficient, or on explicit finish intent. Topic edits,
 path changes and corrections do not spend another question. An optional
 `discovery.interview` review marker and optional transcript `kind` extend the
 existing version-1 JSON; no database migration is needed. Older transcripts
 are counted compatibly. Review permits direct topic editing and identifies
-missing evidence; completion is never operator confirmation or demo approval.
+missing evidence and a summary of understood topics; completion is never operator
+confirmation or demo approval. Explicit resume preserves answers and the turn count,
+rejects pending processing, and makes no provider call. Previously finished sessions
+remain in review until the client chooses to resume. Provider failure or spending
+caps can still prevent conversational clarification; topic editing remains available.
 
 Percentage success targets require an evaluation sample, reviewed reference and
 calculation of correct/failed outcomes. Camera workflows also expose unresolved
@@ -200,7 +207,7 @@ creative readiness, brief gates and post-demo lock. `tests/lifecycle-smoke.mjs`
 covers the pre-client invitation/attach/approval API steps against localhost
 only. Existing session/import/demo lifecycle tests pass.
 
-Two operator-authorized paid calls using prompt version 2 missed the eight-second
+Historical pre-release findings (superseded by the saved-answer release and current runbook): two operator-authorized paid calls using prompt version 2 missed the eight-second
 inference deadline. No answer was saved and actual billed usage was unavailable.
 A read-only model access check succeeded. Prompt version 3 removes unused output;
 a separately authorized two-call retest saved the Polish case in 7.775 seconds

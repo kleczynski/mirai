@@ -19,6 +19,8 @@ import {
   answeredQuestions,
   interviewComplete,
   MAX_DISCOVERY_ANSWERS,
+  canResumeInterview,
+  questionText,
   initialDiscovery,
   applyModelOutput,
   evidenceBlockers,
@@ -41,6 +43,7 @@ for (const file of [
   "0000_lucky_silver_sable.sql",
   "0001_tiny_pepper_potts.sql",
   "0002_polite_bucky.sql",
+  "0003_salty_giant_girl.sql",
 ])
   sqlite.exec(readFileSync(new URL("../drizzle/" + file, import.meta.url), "utf8"));
 function statement(sql, values = []) {
@@ -359,7 +362,9 @@ assert.throws(() =>
     "latest",
   ),
 );
-for (const q of Object.values(hostQuestions))
+for (const [, q] of Object.entries(hostQuestions).filter(
+  ([id]) => !["checkpoint", "clarify", "final_check"].includes(id),
+))
   for (const lang of ["en", "pl"]) assert.equal((q[lang].match(/\?/g) ?? []).length, 1);
 const second = await create();
 await mutate(second.token, { action: "start" });
@@ -777,7 +782,7 @@ await assert.rejects(
   (e) => e.status === 409,
 );
 
-// Eight saved answers include the opening; corrections and topic/path edits never consume turns.
+// Ten saved answers include the opening; corrections and topic/path edits never consume turns.
 const bounded = await create();
 await mutate(bounded.token, { action: "start" });
 await mutate(bounded.token, { action: "path", path: "automation" });
@@ -807,14 +812,14 @@ const questionIds = boundedResult.discovery.transcript
   .filter((t) => t.role === "assistant")
   .map((t) => t.meta?.questionId)
   .filter(Boolean);
-assert.equal(questionIds.length, 8);
+assert.equal(questionIds.length, MAX_DISCOVERY_ANSWERS);
 assert.equal(new Set(questionIds).size, questionIds.length);
 assert.equal(boundedResult.discovery.transcript.at(-1).meta.questionId, undefined);
 await assert.rejects(
   () =>
     mutate(
       bounded.token,
-      { action: "message", text: "Ninth question attempt" },
+      { action: "message", text: "Eleventh question attempt" },
       provider,
     ),
   (e) => e.status === 409,
@@ -825,8 +830,208 @@ const direct = await mutate(bounded.token, {
   topic: "delivery",
   text: "One fictional operator on a laptop reviews a sample result.",
 });
-assert.equal(answeredQuestions(direct.discovery), 8);
+assert.equal(answeredQuestions(direct.discovery), MAX_DISCOVERY_ANSWERS);
 assert.ok(interviewComplete(direct.discovery));
+assert.equal(canResumeInterview(direct.discovery), false);
+await assert.rejects(
+  () => mutate(bounded.token, { action: "resume" }),
+  (e) => e.status === 409,
+);
+
+// At the closing checkpoint every gap is presented, including previously asked
+// but vague topics. Covered topics are omitted, in both supported languages.
+for (const language of ["en", "pl"]) {
+  const closing = structuredClone(boundedResult.discovery);
+  delete closing.interview;
+  closing.transcript = closing.transcript.filter(
+    (t) =>
+      t.kind !== "answer" &&
+      !["checkpoint", "clarify", "final_check"].includes(t.meta?.questionId),
+  );
+  for (let i = 0; i < 7; i++)
+    closing.transcript.push({
+      id: `closing-${i}`,
+      role: "client",
+      kind: "answer",
+      text: "Uncertain",
+      createdAt: "2026-09-12",
+    });
+  closing.topics.context = {
+    summary: "Fictional work",
+    clientQuotes: ["Fictional work"],
+    sourceIds: ["closing-0"],
+    confidence: "high",
+    origin: "model",
+    updatedAt: "2026-09-12",
+  };
+  assert.equal(allowedQuestions(closing, "custom")[0], "checkpoint");
+  const prompt = questionText("checkpoint", closing, language);
+  for (const topic of openGaps(closing)) {
+    const target =
+      {
+        frequency_impact: "frequency",
+        tools_data: "example",
+        success_criteria: "success",
+        pain_or_idea: "task",
+      }[topic] ?? topic;
+    assert.ok(prompt.includes(hostQuestions[target][language]), topic);
+  }
+  assert.ok(!prompt.includes(hostQuestions.context[language]));
+}
+
+// Old eight-answer reviews stay closed until explicit resume, which is free,
+// idempotent, revision checked and preserves all saved answers.
+const resumable = await create();
+const legacyReview = structuredClone(boundedResult.discovery);
+legacyReview.transcript = legacyReview.transcript.filter(
+  (t) => !["checkpoint", "clarify", "final_check"].includes(t.meta?.questionId),
+);
+let keptAnswers = 0;
+legacyReview.transcript = legacyReview.transcript.filter(
+  (t) => t.kind !== "answer" || ++keptAnswers <= 8,
+);
+sqlite
+  .prepare(
+    "UPDATE sessions SET data = json_set(data, '$.discovery', json(?)) WHERE id = ?",
+  )
+  .run(JSON.stringify(legacyReview), resumable.id);
+assert.ok(interviewComplete(legacyReview));
+assert.ok(canResumeInterview(legacyReview));
+const resumeBody = { action: "resume", revision: 0, requestId: crypto.randomUUID() };
+const noPaidResume = () => {
+  throw Error("Resume must not call provider");
+};
+const resumed = await handleDiscovery(
+  request(resumable.token, resumeBody),
+  db,
+  { ...config, apiKey: "" },
+  noPaidResume,
+);
+assert.equal(answeredQuestions(resumed.discovery), 8);
+assert.equal(resumed.discovery.interview, undefined);
+assert.equal(resumed.discovery.confirmedAt, null);
+assert.equal(resumed.discovery.transcript.at(-1).meta.questionId, "checkpoint");
+assert.deepEqual(
+  resumed.discovery.transcript.slice(0, legacyReview.transcript.length),
+  legacyReview.transcript,
+);
+const resumeReplay = await handleDiscovery(
+  request(resumable.token, resumeBody),
+  db,
+  config,
+  noPaidResume,
+);
+assert.equal(resumeReplay.revision, resumed.revision);
+await assert.rejects(
+  () =>
+    handleDiscovery(
+      request(resumable.token, { ...resumeBody, requestId: crypto.randomUUID() }),
+      db,
+      config,
+      noPaidResume,
+    ),
+  (e) => e.status === 409,
+);
+assert.equal(
+  canResumeInterview({
+    ...legacyReview,
+    processing: { status: "pending", requestId: "pending", startedAt: "2026-09-12" },
+  }),
+  false,
+);
+const plannedPayload = JSON.parse(
+  providerPayload(resumed, resumed.discovery).input[0].content,
+);
+assert.equal(plannedPayload.planning.remaining, 2);
+assert.deepEqual(plannedPayload.planning.gaps, openGaps(resumed.discovery));
+
+// A closing answer resolves several topics, then the tenth answer completes
+// the acceptance method using both original and new quoted evidence.
+const closingValues = {
+  context: "A fictional operator compares product listings on a laptop.",
+  pain_or_idea: "Prepare a clear comparison to draft new listings.",
+  workflow: "Copy fictional competitor attributes, compare them and review a table.",
+  tools_data:
+    "Paste fictional listing text from a browser and export a comparison CSV.",
+  frequency_impact: "Compare thirty listings each week, currently taking two days.",
+  constraints: "The first demo has three days and uses fictional listings only.",
+  delivery:
+    "One fictional operator on a laptop pastes three examples and exports a table.",
+  success_criteria: "The comparison should include every required attribute.",
+};
+const closingMessage = Object.values(closingValues).join("\n");
+unblock(resumable.id);
+const ninth = await mutate(
+  resumable.token,
+  { action: "message", text: closingMessage },
+  async (payload) => {
+    const context = JSON.parse(payload.input[0].content);
+    const latest = context.messages.at(-1);
+    return {
+      output: {
+        path: null,
+        topicUpdates: Object.entries(closingValues).map(([topic, text]) => ({
+          topic,
+          summary: text,
+          confidence: topic === "success_criteria" ? "low" : "high",
+          quotes: [{ messageId: latest.id, text }],
+        })),
+      },
+      meta: {
+        model: DISCOVERY_MODEL,
+        promptVersion: "5",
+        latencyMs: 1,
+        completionReason: "completed",
+      },
+      chargedMicrousd: 1000,
+    };
+  },
+);
+assert.equal(answeredQuestions(ninth.discovery), 9);
+assert.deepEqual(openGaps(ninth.discovery), ["success_criteria"]);
+assert.equal(ninth.discovery.interview, undefined);
+assert.throws(() => confirmDiscovery(ninth, ninth.revision));
+unblock(resumable.id);
+const tenth = await mutate(
+  resumable.token,
+  {
+    action: "message",
+    text: "The operator compares three fictional examples with a manual checklist and counts each missing attribute as a failure.",
+  },
+  async (payload) => {
+    const context = JSON.parse(payload.input[0].content);
+    const latest = context.messages.at(-1);
+    const prior = context.evidence.success_criteria.quotes[0];
+    assert.equal(prior.text, closingValues.success_criteria);
+    return {
+      output: {
+        path: null,
+        topicUpdates: [
+          {
+            topic: "success_criteria",
+            summary:
+              "Review every attribute on three fictional examples against a manual checklist.",
+            confidence: "high",
+            quotes: [prior, { messageId: latest.id, text: latest.text }],
+          },
+        ],
+      },
+      meta: {
+        model: DISCOVERY_MODEL,
+        promptVersion: "5",
+        latencyMs: 1,
+        completionReason: "completed",
+      },
+      chargedMicrousd: 1000,
+    };
+  },
+);
+assert.equal(answeredQuestions(tenth.discovery), 10);
+assert.equal(tenth.discovery.interview.reason, "coverage");
+assert.equal(tenth.stage, "Discovery");
+assert.equal(tenth.discovery.topics.success_criteria.sourceIds.length, 2);
+assert.equal(confirmDiscovery(tenth, tenth.revision).stage, "Ready to build");
+assert.equal(canResumeInterview(tenth.discovery), false);
 
 // Explicit stop commands work without a configured provider and are idempotent.
 for (const intent of [

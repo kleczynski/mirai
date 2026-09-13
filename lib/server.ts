@@ -19,7 +19,7 @@ export function database() {
     );
   return env.DB;
 }
-async function clerkOwner(secretKey: string) {
+export async function clerkIdentity(secretKey: string) {
   const token = (await cookies()).get("__session")?.value;
   if (!token) throw new ApiError(401, "Sign in to open your workspace.");
   try {
@@ -29,6 +29,7 @@ async function clerkOwner(secretKey: string) {
     const account = await client.users.getUser(verified.sub);
     return {
       userId: account.id,
+      verifiedEmails: account.emailAddresses.filter(x => x.verification?.status === "verified").map(x => x.emailAddress.toLowerCase()),
       email:
         account.emailAddresses.find((x) => x.id === account.primaryEmailAddressId)
           ?.emailAddress ?? "",
@@ -46,7 +47,7 @@ export async function owner() {
       "Operator access needs configuration. Set MIRAI_OWNER_EMAIL in the Sites runtime settings.",
     );
   const secretKey = env.CLERK_SECRET_KEY;
-  const user = secretKey ? await clerkOwner(secretKey) : await getChatGPTUser();
+  const user = secretKey ? await clerkIdentity(secretKey) : await getChatGPTUser();
   if (!user) throw new ApiError(401, "Sign in to open your workspace.");
   if (user.email.toLowerCase() !== configured.toLowerCase())
     throw new ApiError(

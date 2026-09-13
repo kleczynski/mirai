@@ -753,6 +753,22 @@ a {
   color: #3e866e;
   background: #eaf6f0;
 }
+.status-running {
+  color: #2f855a;
+  background: #ecfdf3;
+}
+.status-warning {
+  color: #a65f1b;
+  background: #fff4e5;
+}
+.status-degraded {
+  color: #9b2c2c;
+  background: #ffecea;
+}
+.status-paused {
+  color: #637083;
+  background: #eef1f6;
+}
 .meta {
   color: #7c899f;
   font-size: 12px;

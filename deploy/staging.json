@@ -1,5 +1,6 @@
 {
   "name": "mirai-staging",
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "mirai-staging-files" }],
   "d1_databases": [
     {
       "binding": "DB",

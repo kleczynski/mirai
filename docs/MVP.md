@@ -101,8 +101,12 @@ and [local setup and tests](DEVELOPMENT.md#discovery-chat-development).
 
 ### Bounded interview and voice
 
-Discovery chat now stops within eight saved client-answer turns or on explicit
-finish intent. Corrections and direct topic edits do not consume interview turns.
+The adaptive discovery interview stops within ten saved client-answer turns or on explicit
+finish intent. It prioritizes success and first use, then gathers unresolved
+topics in closing checklists. Corrections and direct topic edits do not consume interview turns.
+Clients see a summary before leaving. Incomplete reviews can explicitly resume
+while turns and clarification prompts remain; older eight-answer reviews do not reopen automatically.
+This update was released to staging and production on 2026-09-12; consult the operations runbook for release evidence.
 The review identifies gaps, including undefined percentage evaluation and camera
 safeguards, and still requires the operator to confirm readiness. The client has
 progress, expandable history, draft recovery, reduced-motion processing feedback
@@ -121,3 +125,20 @@ original answer available in review. Repeated request IDs do not issue another
 paid call, and concurrent edits invalidate late summaries. The interface
 acknowledges saves within the ten-second request budget and provides polling
 recovery. See the discovery design for deadlines and accounting boundaries.
+
+## Project collaboration extension
+
+The current working tree adds `/projects`: client, collaborator and owner origins,
+Clerk-authenticated project contributors, immutable evidence revisions and owner
+review decisions, private originals, personal/shared layouts, external demo
+provenance, owner approval and pilot records. See the
+[feature scope](scope/project-collaboration.md) and current operations runbook for
+release status; these paragraphs alone do not assert deployment.
+
+Legacy sessions are projected as client projects and open their existing journey.
+They retain bearer invitations and client version acknowledgements. New projects
+use a separate owner gate: contributors cannot approve, export final documents,
+manage access or deploy. Pending contributions do not change an approved scope;
+accepted scope changes require readiness and a new approved demo before handoff.
+Archiving revokes member access; explicit purge removes content/files while keeping
+spending accounting. BDO remains a separately built product, not a Mirai runtime.

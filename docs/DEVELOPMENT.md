@@ -1,6 +1,6 @@
 # Develop Mirai outside Codex
 
-Updated after the 2026-09-11 release. Any editor and terminal can edit and run this project; Codex is not a runtime dependency. Production and staging use operator-owned Cloudflare Workers, separate D1 databases and Clerk. The [operations runbook](plans/production-new-clients.md) is the current release reference.
+Updated after the 2026-09-12 release. Any editor and terminal can edit and run this project; Codex is not a runtime dependency. Production and staging use operator-owned Cloudflare Workers, separate D1 databases and Clerk. The [operations runbook](plans/production-new-clients.md) is the current release reference.
 
 ## Stack and map
 
@@ -103,6 +103,12 @@ node tests/discovery-boundary.mjs
 The boundary suite holds a fictional local request body open and checks the real
 9.5-second route deadline. It makes no provider call.
 
+Adaptive discovery regressions in `tests/discovery-chat.mjs` cover ten answers,
+closing checklists in English and Polish, recovery of old eight-answer reviews,
+free/idempotent resume, and completion on answer ten with preserved source quotes.
+`tests/discovery-flow.mjs` verifies resume and stale-revision rejection through HTTP.
+The original guided form still has eight questions; its lifecycle tests are unchanged.
+
 Optional localhost browser smokes, skipped unless Playwright is installed.
 They are not in `verify.yml`.
 
@@ -188,7 +194,9 @@ hosted database. It records safe metadata in ignored
 refuses to repeat an existing run. Timeouts count as attempts. Do not remove
 the report to rerun without new authorization. After separate authorization,
 `MIRAI_PAID_TEST_RUN` can name a new run (lowercase letters, digits and hyphens);
-each run keeps a separate report and retains the two-attempt limit. All saved
+each run keeps a separate report and retains the two-attempt limit. Each run also
+enforces a $0.25 reservation/accounting cap; `MIRAI_PAID_TEST_CAP_USD` may lower
+but not raise it. All saved
 paid-smoke reports share a hard $1 cumulative accounting budget, including
 reservations for unknown usage. The shared
 lock prevents overlapping runs. A failed check exits nonzero;
@@ -231,3 +239,23 @@ localhost is the documented default. If the origin is `https://mirai.party`,
 it also requires `MIRAI_LIVE_SMOKE_PRODUCTION=I_REALLY_MEAN_MIRAI_PARTY`. It
 never prints invitation tokens (logs only “token received”). It is not in
 `verify.yml`. Do not point it at staging unless the operator asks.
+
+## Project collaboration checks
+
+The additive project workspace is `/projects`. Legacy sessions remain accessible
+through their existing routes. New projects use Clerk membership, private R2
+originals (`BUCKET`), independent layouts and owner version approval.
+
+```sh
+node --import ./tests/typescript-loader.mjs tests/project-collaboration.mjs
+node tests/project-migration.mjs
+node tests/project-http.mjs
+```
+
+The first two suites use disposable SQLite. The HTTP suite is hard-coded to
+localhost:5173 and writes only fictional local records, including a private test
+PDF and an archive/purge cycle. Apply pending local migrations before running it.
+It does not prove real Clerk login. Record authenticated staging contributor and
+browser checks separately. Originals are limited to 5 MB each, 100 files/100 MB
+per project; supported downloads are PDF, PNG, JPEG and WebP with attachment headers.
+Never make either environment's R2 bucket public.

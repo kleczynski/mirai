@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   allowedQuestions,
+  canResumeInterview,
+  questionText,
   hostQuestions,
   openGaps,
   type QuestionId,
@@ -76,6 +78,7 @@ const base = { revision: z.number().int().nonnegative(), requestId: z.string().u
 const mutation = z.discriminatedUnion("action", [
   z.object({ ...base, action: z.literal("start") }).strict(),
   z.object({ ...base, action: z.literal("finish") }).strict(),
+  z.object({ ...base, action: z.literal("resume") }).strict(),
   z
     .object({
       ...base,
@@ -260,6 +263,7 @@ export async function handleDiscovery(
     const t = s.discovery.transcript.find((t) => t.id === m.requestId)!;
     if (
       (m.action === "finish" && t.kind === "finish") ||
+      (m.action === "resume" && t.kind === "resume") ||
       (m.action === "edit" && t.text === m.text && t.topic === m.topic) ||
       (m.action === "edit-message" &&
         t.text === m.text &&
@@ -297,6 +301,36 @@ export async function handleDiscovery(
   if (m.action === "start") {
     if (s.discovery) return s;
     next.discovery = initialDiscovery(s, now);
+  } else if (m.action === "resume") {
+    if (!canResumeInterview(s.discovery!))
+      throw new DiscoveryError(
+        409,
+        pl
+          ? "Nie można teraz wznowić pytań. Sprawdź zapisany materiał i pozostałe braki."
+          : "Questions cannot resume now. Review the saved evidence and remaining gaps.",
+      );
+    next.discovery = structuredClone(s.discovery!);
+    delete next.discovery.interview;
+    delete next.discovery.processing;
+    next.discovery.confirmedAt = null;
+    const question = allowedQuestions(next.discovery, s.template)[0];
+    if (!question)
+      throw new DiscoveryError(
+        409,
+        pl
+          ? "Wykorzystano dostępne doprecyzowania. Pozostałe braki uzupełnisz w tematach."
+          : "Available clarifications are exhausted. Fill remaining gaps in the topics.",
+      );
+    next.discovery.transcript.push({
+      id: m.requestId,
+      role: "system",
+      text: "resume",
+      kind: "resume",
+      createdAt: now,
+    });
+    next.discovery.transcript.push(
+      hostTurn(questionText(question, next.discovery, s.language), now, question),
+    );
   } else if (
     m.action === "finish" ||
     (m.action === "message" && isFinishIntent(m.text))
@@ -430,7 +464,7 @@ export async function handleDiscovery(
       SELECT ?, ?, ?, 'pending', ?, ? WHERE
       EXISTS (SELECT 1 FROM sessions WHERE id = ? AND revision = ? AND token_hash = ? AND expires_at > ? AND json_array_length(json_extract(data, '$.demos')) = 0 AND json_extract(data, '$.source') IS NULL)
       AND (SELECT COALESCE(SUM(COALESCE(charged_microusd, reserved_microusd)), 0) FROM discovery_requests WHERE session_id = ?) + ? <= ?
-      AND (SELECT COALESCE(SUM(COALESCE(charged_microusd, reserved_microusd)), 0) FROM discovery_requests) + ? <= ?
+      AND (SELECT COALESCE(SUM(COALESCE(charged_microusd, reserved_microusd)), 0) FROM discovery_requests) + (SELECT COALESCE(SUM(accounted_microusd), 0) FROM discovery_retired_usage) + ? <= ?
       AND (SELECT COUNT(*) FROM discovery_requests WHERE session_id = ?) < 40
       AND NOT EXISTS (SELECT 1 FROM discovery_requests WHERE session_id = ? AND (created_at > ? OR (status = 'pending' AND created_at > ?)))
       ON CONFLICT(id) DO NOTHING`)
@@ -590,7 +624,7 @@ export async function handleDiscovery(
         const question = allowedQuestions(next.discovery, s.template)[0];
         if (question)
           next.discovery.transcript.push(
-            hostTurn(hostQuestions[question][s.language], now, question),
+            hostTurn(questionText(question, next.discovery, s.language), now, question),
           );
         else
           next.discovery = finishInterview(

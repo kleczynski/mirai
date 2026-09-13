@@ -1,5 +1,6 @@
 {
   "name": "mirai-production",
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "mirai-production-files" }],
   "account_id": "61c83af95d6ce17e198b3d60268ef6df",
   "workers_dev": true,
   "preview_urls": false,

@@ -1,0 +1,522 @@
+.project-workspace {
+  --ink: #24344c;
+  --muted: #52637a;
+  --line: #d6dfe9;
+  --blue: #315bdd;
+  --paper: #fff;
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr);
+  min-height: 100vh;
+  color: var(--ink);
+  background: #f5f8fc;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.project-workspace * {
+  box-sizing: border-box;
+}
+.project-workspace h1 {
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 650;
+  letter-spacing: -1px;
+  line-height: 1.15;
+  margin: 8px 0 20px;
+}
+.project-workspace h2 {
+  font-size: 20px;
+  font-weight: 650;
+}
+.project-workspace h3 {
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.35;
+  margin: 12px 0;
+}
+.project-workspace p {
+  margin: 10px 0;
+  max-width: 78ch;
+}
+.project-workspace button,
+.project-workspace input,
+.project-workspace textarea,
+.project-workspace select {
+  font: inherit;
+}
+.project-workspace button {
+  padding: 8px 12px;
+  border: 1px solid #a9bad0;
+  border-radius: 7px;
+  background: white;
+  cursor: pointer;
+  color: var(--ink);
+  text-align: left;
+}
+.project-workspace button:hover {
+  border-color: var(--blue);
+  background: #f0f4ff;
+}
+.project-workspace button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.project-workspace :focus-visible {
+  outline: 3px solid #315bdd;
+  outline-offset: 3px;
+}
+.project-workspace a {
+  color: #244ec4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.project-workspace small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+.project-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: auto;
+  background: white;
+  border-right: 1px solid var(--line);
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.project-sidebar .project-brand {
+  font-size: 32px;
+  color: var(--ink);
+  font-weight: 750;
+  letter-spacing: -1px;
+  text-decoration: none;
+}
+.project-brand span {
+  color: var(--blue);
+}
+.project-sidebar > p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 22px;
+}
+.project-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.project-sidebar h2 {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.project-sidebar > button {
+  border: 0;
+  padding: 12px 10px;
+  border-left: 3px solid transparent;
+}
+.project-sidebar > button.selected {
+  background: #edf2ff;
+  border-left-color: var(--blue);
+}
+.project-sidebar strong {
+  font-size: 14px;
+}
+.project-sidebar .project-access {
+  margin-top: auto;
+  padding-top: 36px;
+}
+.project-main {
+  padding: 42px clamp(20px, 4vw, 60px);
+  min-width: 0;
+  max-width: 1700px;
+}
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+.project-header p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.project-stage {
+  background: #eaf0fe;
+  border: 1px solid #becdf9;
+  color: #244ec4;
+  padding: 8px 16px;
+  border-radius: 30px;
+  white-space: nowrap;
+  margin-top: 15px;
+}
+.project-gates {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  background: #fff;
+  border-top: 3px solid var(--blue);
+  border-bottom: 1px solid var(--line);
+  padding: 20px 24px;
+}
+.project-gates div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.project-gates span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.project-gates button {
+  margin-left: auto;
+}
+.project-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 24px 0;
+}
+.project-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.project-toolbar select {
+  border: 1px solid var(--line);
+  padding: 8px;
+  background: white;
+}
+.project-toolbar > button:first-child,
+.project-form form > button,
+.project-actions > button:first-child {
+  background: var(--blue);
+  color: white;
+  border-color: var(--blue);
+}
+.project-section-links {
+  display: flex;
+  gap: 8px 18px;
+  flex-wrap: wrap;
+  padding: 10px 0 24px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line);
+}
+.project-section {
+  padding: 32px 0;
+  scroll-margin-top: 20px;
+}
+.project-section > header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.project-section > header span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.project-empty {
+  border-left: 2px solid var(--line);
+  padding: 8px 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.project-card {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 0 #e5eaf1;
+  overflow: auto;
+}
+.project-card.kind-assumption {
+  border-top: 4px solid #b07a13;
+}
+.project-card.kind-decision {
+  border-top: 4px solid #315bdd;
+}
+.project-card.kind-open_question {
+  border-top: 4px solid #7d55a0;
+}
+.project-card.state-accepted {
+  border-left: 4px solid #287354;
+}
+.project-card-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.project-card-label strong {
+  color: #865800;
+  font-weight: 500;
+}
+.state-accepted .project-card-label strong {
+  color: #21633f;
+}
+.project-card-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 360px;
+  overflow: auto;
+}
+.project-source {
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 1px solid #e5eaf1;
+  padding-top: 12px;
+  overflow-wrap: anywhere;
+}
+.project-card > a {
+  display: block;
+  font-size: 13px;
+  margin: 6px 0;
+}
+.project-card-tools {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.project-card-tools button {
+  padding: 4px 7px;
+  font-size: 12px;
+}
+.project-card details {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.project-review {
+  border-left: 2px solid #287354;
+  padding-left: 10px;
+  font-size: 13px;
+}
+.project-workspace summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 0;
+}
+.project-workspace form {
+  display: grid;
+  gap: 16px;
+  margin: 16px 0;
+}
+.project-workspace label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.project-workspace input,
+.project-workspace select,
+.project-workspace textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #a9bad0;
+  border-radius: 6px;
+  color: var(--ink);
+  min-width: 0;
+}
+.project-workspace textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+.project-workspace form > button {
+  justify-self: start;
+}
+.project-form {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 28px;
+  max-width: 800px;
+  margin: 24px 0;
+}
+.project-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.project-actions p {
+  width: 100%;
+  font-size: 13px;
+  color: var(--muted);
+}
+.project-version {
+  border-left: 3px solid #829ad5;
+  padding: 10px 24px;
+  margin: 20px 0;
+  max-width: 850px;
+  background: white;
+}
+.project-version > a {
+  margin-right: 20px;
+}
+.project-version form {
+  max-width: 600px;
+}
+.project-version blockquote {
+  border-left: 2px solid var(--line);
+  padding-left: 14px;
+}
+.project-notice {
+  color: #21633f;
+  background: #edf8f0;
+  padding: 14px 18px;
+  border-radius: 6px;
+}
+.project-error,
+.project-conflict {
+  background: #fff4eb;
+  border: 1px solid #c78843;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 8px;
+}
+.project-history {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 24px;
+}
+.project-workspace pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  max-height: 400px;
+  overflow: auto;
+}
+.project-archive {
+  border-top: 1px solid var(--line);
+  margin-top: 40px;
+  padding-top: 20px;
+}
+.project-archive button {
+  margin-right: 12px;
+}
+.project-welcome {
+  max-width: 650px;
+  padding: 12vh 0;
+}
+.project-welcome p {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 24px 0;
+}
+.project-welcome button {
+  background: var(--blue);
+  color: white;
+  padding: 12px 18px;
+}
+@media (max-width: 1100px) {
+  .project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .project-card {
+    grid-column: span 1 !important;
+  }
+  .project-workspace {
+    grid-template-columns: 205px minmax(0, 1fr);
+  }
+  .project-gates {
+    gap: 20px;
+  }
+  .project-main {
+    padding: 28px 22px;
+  }
+}
+@media (max-width: 720px) {
+  .project-workspace {
+    display: block;
+  }
+  .project-sidebar {
+    position: relative;
+    height: auto;
+    padding: 18px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .project-sidebar > p,
+  .project-sidebar h2,
+  .project-sidebar .project-access {
+    display: none;
+  }
+  .project-sidebar nav {
+    flex-direction: row;
+    margin: 8px 0;
+  }
+  .project-sidebar > button {
+    padding: 8px;
+  }
+  .project-main {
+    padding: 24px 16px;
+  }
+  .project-header {
+    display: block;
+  }
+  .project-stage {
+    display: inline-block;
+    margin: 0 0 20px;
+  }
+  .project-grid {
+    display: block;
+  }
+  .project-card {
+    margin-bottom: 14px;
+    min-height: 0 !important;
+  }
+  .project-gates {
+    padding: 16px;
+    gap: 16px;
+  }
+  .project-gates button {
+    margin-left: 0;
+  }
+  .layout-control {
+    display: none;
+  }
+  .project-form {
+    padding: 18px;
+  }
+  .project-toolbar {
+    gap: 8px;
+  }
+  .project-section {
+    padding: 24px 0;
+  }
+  .project-welcome {
+    padding: 40px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .project-workspace * {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .project-sidebar {
+    max-height: 260px;
+    overflow: auto;
+  }
+  .project-sidebar .project-brand {
+    font-size: 24px;
+  }
+}

@@ -66,6 +66,7 @@ const config = {
   observability: { enabled: false },
   vars,
   d1_databases: [database],
+  r2_buckets: staging.r2_buckets,
 };
 
 writeFileSync(outputConfig, `${JSON.stringify(config, null, 2)}\n`);

@@ -4,6 +4,7 @@ import { ArrowRight, Check, MessageSquare, RotateCw } from "lucide-react";
 import { questions, type Session } from "@/lib/model";
 import {
   MAX_DISCOVERY_ANSWERS,
+  canResumeInterview,
   answeredQuestions,
   interviewComplete,
   evidenceBlockers,
@@ -343,7 +344,7 @@ export default function DiscoveryClient({
         return next;
       });
       if (key && key !== "message") setEditing("");
-      if (action.action === "start") setForm(false);
+      if (action.action === "start" || action.action === "resume") setForm(false);
     } catch (e) {
       setError(
         controller.signal.aborted
@@ -606,8 +607,8 @@ export default function DiscoveryClient({
                     "Odpowiedzi są zapisane. Gospodarz sprawdzi gotowość przed budową.",
                   )
                 : tr(
-                    "Eight answers at most. Finish earlier whenever you’re ready.",
-                    "Najwyżej osiem odpowiedzi. Możesz zakończyć wcześniej.",
+                    "Up to ten answers, including a final check of any missing details. You can finish earlier.",
+                    "Do dziesięciu odpowiedzi, w tym sprawdzenie brakujących szczegółów na koniec. Możesz zakończyć wcześniej.",
                   )}
             </p>
           </header>
@@ -667,7 +668,7 @@ export default function DiscoveryClient({
               aria-labelledby="pending-title"
             >
               <span className="review-check">
-                <Check size={20} />
+                {openGaps(d).length ? <MessageSquare size={20} /> : <Check size={20} />}
               </span>
               <h2
                 id="pending-title"
@@ -724,16 +725,44 @@ export default function DiscoveryClient({
                 ref={focusTarget}
               >
                 {tr(
-                  "Your starting point is ready to review.",
-                  "Twój punkt wyjścia jest gotowy do przeglądu.",
+                  openGaps(d).length
+                    ? "Your answers are saved. Some details are still open."
+                    : "Your starting point is ready to review.",
+                  openGaps(d).length
+                    ? "Odpowiedzi zapisane. Niektóre szczegóły pozostają otwarte."
+                    : "Twój punkt wyjścia jest gotowy do przeglądu.",
                 )}
               </h2>
               <p>
                 {tr(
-                  "No more interview questions. Review the saved evidence and fill any gaps directly. Your host must confirm readiness; this does not approve a demo or deployment.",
-                  "To koniec pytań w rozmowie. Sprawdź zapisany materiał i uzupełnij braki bezpośrednio. Gospodarz musi potwierdzić gotowość; to nie jest akceptacja demo ani wdrożenia.",
+                  "Review what we understood below. Your host will review this before building the first demo. You can correct any detail in the topics.",
+                  "Sprawdź poniżej, jak zrozumieliśmy Twoje odpowiedzi. Gospodarz przejrzy je przed budową pierwszego demo. Każdy szczegół możesz poprawić w tematach.",
                 )}
               </p>
+              <h3>{tr("What we understood", "Jak zrozumieliśmy Twój pomysł")}</h3>
+              {!requiredTopics(d).some((topic) => d.topics[topic]?.summary) && (
+                <p className="meta">
+                  {tr(
+                    "No topic summary is available yet. Your saved messages remain in the conversation history.",
+                    "Nie ma jeszcze podsumowania tematów. Zapisane wiadomości pozostają w historii rozmowy.",
+                  )}
+                </p>
+              )}
+              <dl>
+                {requiredTopics(d)
+                  .filter((topic) => d.topics[topic]?.summary)
+                  .map((topic) => (
+                    <div
+                      className="answer-row"
+                      key={topic}
+                    >
+                      <dt>
+                        <strong>{topicLabels[topic][s.language]}</strong>
+                      </dt>
+                      <dd className="preserve">{d.topics[topic]!.summary}</dd>
+                    </div>
+                  ))}
+              </dl>
               {openGaps(d).length > 0 ? (
                 <>
                   <h3>{tr("Still unconfirmed", "Nadal niepotwierdzone")}</h3>
@@ -782,6 +811,23 @@ export default function DiscoveryClient({
               >
                 {tr("Review and edit topics", "Przejrzyj i popraw tematy")}
               </button>
+              {!locked && canResumeInterview(d) && (
+                <button
+                  className="button"
+                  disabled={busy || voiceActive || dirty}
+                  onClick={() => void mutate({ action: "resume" })}
+                >
+                  {tr("Continue clarification", "Doprecyzuj w rozmowie")}
+                </button>
+              )}
+              {!locked && canResumeInterview(d) && dirty && (
+                <p className="meta">
+                  {tr(
+                    "Save or clear your draft before continuing.",
+                    "Zapisz lub wyczyść szkic przed kontynuowaniem.",
+                  )}
+                </p>
+              )}
             </section>
           ) : (
             !form &&
@@ -807,6 +853,7 @@ export default function DiscoveryClient({
                     <span className="interview-eyebrow">Mirai</span>
                     <h2
                       id="active-question"
+                      className="preserve"
                       ref={focusTarget}
                       tabIndex={-1}
                     >

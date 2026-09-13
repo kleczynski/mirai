@@ -23,6 +23,10 @@ import {
   CircleCheck,
   Send,
   Download,
+  CircleAlert,
+  CircleDollarSign,
+  Activity,
+  Database,
 } from "lucide-react";
 import {
   Dialog,
@@ -57,6 +61,41 @@ import DiscoveryObserver, { DiscoveryTab } from "./discovery-observer";
 import SourceHistory, { TelegramTranscript } from "./source-history";
 import { registerWorkspaceTools } from "@/lib/webmcp";
 import { MiraiSignOut } from "./clerk-provider";
+type MonitoringService = {
+  id: string;
+  name: string;
+  status: "running" | "warning" | "degraded" | "paused";
+  statusLabel: string;
+  usageCount: number;
+  successCount: number;
+  failedCount: number;
+  pendingCount: number;
+  costUsd: number;
+  budgetUsd: number | null;
+  budgetUsedPercent: number | null;
+  lastActivityAt: string | null;
+  details: string;
+};
+type MonitoringSnapshot = {
+  generatedAt: string;
+  summary: {
+    totalSessions: number;
+    activeInvitations: number;
+    totalDemos: number;
+    totalFeedback: number;
+    discoveryRequests: number;
+    discoveryCostUsd: number;
+    discoveryBudgetUsd: number;
+    discoveryBudgetUsedPercent: number;
+  };
+  services: MonitoringService[];
+};
+const monitorStatusClass = (
+  status: MonitoringService["status"],
+) => `status status-${status}`;
+const monitorCurrency = (value: number) => `$${value.toFixed(4)}`;
+const monitorPercent = (value: number | null) =>
+  value === null ? "n/a" : `${value.toFixed(1)}%`;
 const icons = {
   custom: Sparkles,
   carpenter: Hammer,
@@ -159,6 +198,8 @@ export default function Workspace({
   const [demoUrl, setDemoUrl] = useState("");
   const [demoSummary, setDemoSummary] = useState("");
   const [addingDemo, setAddingDemo] = useState(false);
+  const [monitoring, setMonitoring] = useState<MonitoringSnapshot | null>(null);
+  const [monitoringLoading, setMonitoringLoading] = useState(false);
   const resetDemoForm = () => {
     setChecks([]);
     setDemoUrl("");
@@ -180,6 +221,18 @@ export default function Workspace({
       setLoading(false);
     }
   }, [identity]);
+  const loadMonitoring = useCallback(async () => {
+    if (!identity) return;
+    setMonitoringLoading(true);
+    try {
+      setMonitoring(await api<MonitoringSnapshot>("/api/admin/monitoring"));
+      setError("");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setMonitoringLoading(false);
+    }
+  }, [identity]);
   useEffect(() => {
     setSelected(new URLSearchParams(location.search).get("session"));
   }, []);
@@ -191,6 +244,9 @@ export default function Workspace({
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [reload]);
+  useEffect(() => {
+    if (view === "Monitoring") void loadMonitoring();
+  }, [view, loadMonitoring]);
   useEffect(
     () =>
       registerWorkspaceTools(
@@ -267,6 +323,7 @@ export default function Workspace({
               { title: "Sessions", icon: Layers3 },
               { title: "Playbooks", icon: Workflow },
               { title: "Documents", icon: FileText },
+              { title: "Monitoring", icon: Activity },
             ].map(({ title, icon: Icon }) => (
               <SidebarMenuItem key={title}>
                 <SidebarMenuButton
@@ -286,6 +343,7 @@ export default function Workspace({
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
+          <a href="/projects" style={{ padding: "12px 20px", color: "#315bdd" }}>Projects and collaborators</a>
           <div className="sidebar-note">
             <div className="small-orbit">
               <Sparkles size={18} />
@@ -325,7 +383,7 @@ export default function Workspace({
           </div>
           <span className="top-note">
             <ShieldCheck size={15} />
-            Private client sessions
+            {view === "Monitoring" ? "Operational monitoring" : "Private client sessions"}
           </span>
         </header>
         <main className="workspace-main">
@@ -641,14 +699,18 @@ export default function Workspace({
                       ? "From a conversation to something real."
                       : view === "Playbooks"
                         ? "Start with a problem you know."
-                        : "Context that carries the work forward."}
+                        : view === "Monitoring"
+                          ? "Services, costs and operator status in one place."
+                          : "Context that carries the work forward."}
                   </h1>
                   <p>
                     {view === "Sessions"
                       ? "Discover the problem. Build the right demo. Keep the feedback close."
                       : view === "Playbooks"
                         ? "Three starting points from your friends’ audits. Every session gets its own scope."
-                        : "Build briefs and deployment guidance, generated from each client’s session."}
+                        : view === "Monitoring"
+                          ? "Track discovery budget usage and storage state without leaving your workspace."
+                          : "Build briefs and deployment guidance, generated from each client’s session."}
                   </p>
                 </div>
                 <button
@@ -923,6 +985,167 @@ export default function Workspace({
                     })}
                   </div>
                 </section>
+              )}
+              {view === "Monitoring" && (
+                <>
+                  <section className="section-heading">
+                    <div>
+                      <h2>Operational overview</h2>
+                      <p>
+                        {monitoring
+                          ? `Data refreshed ${new Date(monitoring.generatedAt).toLocaleString()}`
+                          : "No monitoring snapshot loaded yet."}
+                      </p>
+                    </div>
+                    <button
+                      className="text-button"
+                      onClick={() => loadMonitoring()}
+                      disabled={monitoringLoading}
+                    >
+                      <RotateCw size={15} />
+                      Refresh
+                    </button>
+                  </section>
+                  {view === "Monitoring" && error ? (
+                    <div
+                      className="error-box"
+                      role="alert"
+                    >
+                      {error}
+                      <button
+                        className="text-button"
+                        onClick={() => loadMonitoring()}
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  ) : null}
+                  {monitoringLoading ? (
+                    <div
+                      className="quiet-empty"
+                      role="status"
+                    >
+                      Loading operational data…
+                    </div>
+                  ) : monitoring ? (
+                    <>
+                      <div className="detail-grid">
+                        <section className="panel">
+                          <h2>
+                            <CircleDollarSign size={18} />
+                            Costs
+                          </h2>
+                          <p className="meta">
+                            Discovery budget: {monitorCurrency(monitoring.summary.discoveryBudgetUsd)}
+                            {" / "}
+                            Used: {monitorCurrency(monitoring.summary.discoveryCostUsd)}
+                            {" · "}
+                            {monitorPercent(
+                              monitoring.summary.discoveryBudgetUsd > 0
+                                ? monitoring.summary.discoveryBudgetUsedPercent
+                                : null,
+                            )}
+                          </p>
+                          <ul className="constraint-list">
+                            <li>
+                              <Database size={15} />
+                              Total sessions: {monitoring.summary.totalSessions}
+                            </li>
+                            <li>
+                              <CircleAlert size={15} />
+                              Active invitations: {monitoring.summary.activeInvitations}
+                            </li>
+                            <li>
+                              <CircleCheck size={15} />
+                              Discovery requests: {monitoring.summary.discoveryRequests}
+                            </li>
+                            <li>
+                              <MessageSquare size={15} />
+                              Demos linked: {monitoring.summary.totalDemos}
+                            </li>
+                          </ul>
+                        </section>
+                        <section className="panel">
+                          <h2>
+                            <Activity size={18} />
+                            Platform signals
+                          </h2>
+                          <p className="meta">
+                            Feedback volume and request activity are surfaced for quick
+                            operator checks.
+                          </p>
+                          <ul className="constraint-list">
+                            <li>
+                              <MessageSquare size={15} />
+                              Feedback entries: {monitoring.summary.totalFeedback}
+                            </li>
+                            <li>
+                              <CircleAlert size={15} />
+                              Services in view: {monitoring.services.length}
+                            </li>
+                          </ul>
+                        </section>
+                      </div>
+                      <section className="panel">
+                        <h2>Services</h2>
+                        <div className="discovery-table">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Service</th>
+                                <th>Status</th>
+                                <th>Requests</th>
+                                <th>Cost</th>
+                                <th>Budget</th>
+                                <th>Budget used</th>
+                                <th>Last activity</th>
+                                <th>Details</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {monitoring.services.map((service) => (
+                                <tr key={service.id}>
+                                  <td>
+                                    <strong>{service.name}</strong>
+                                  </td>
+                                  <td>
+                                    <span className={monitorStatusClass(service.status)}>
+                                      <span />
+                                      {service.statusLabel}
+                                    </span>
+                                  </td>
+                                  <td>{service.usageCount}</td>
+                                  <td>{monitorCurrency(service.costUsd)}</td>
+                                  <td>{service.budgetUsd === null ? "n/a" : monitorCurrency(service.budgetUsd)}</td>
+                                  <td>{monitorPercent(service.budgetUsedPercent)}</td>
+                                  <td>
+                                    {service.lastActivityAt
+                                      ? new Date(service.lastActivityAt).toLocaleString()
+                                      : "No activity"}
+                                  </td>
+                                  <td className="discovery-metadata">
+                                    {service.details}
+                                  </td>
+                                </tr>
+                              ))}
+                          </table>
+                        </div>
+                      </section>
+                    </>
+                  ) : (
+                    <div className="quiet-empty">
+                      <CircleAlert size={28} />
+                      <h2>No monitoring snapshot available yet</h2>
+                      <button
+                        className="text-button"
+                        onClick={() => void loadMonitoring()}
+                      >
+                        <RotateCw size={15} />
+                        Refresh monitor
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
               {view === "Documents" && (
                 <div className="panel">

@@ -22,6 +22,13 @@
       "when": 1789114625450,
       "tag": "0002_polite_bucky",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789208467852,
+      "tag": "0003_salty_giant_girl",
+      "breakpoints": true
     }
   ]
 }
