@@ -1128,6 +1128,7 @@ export default function Workspace({
                                   </td>
                                 </tr>
                               ))}
+                            </tbody>
                           </table>
                         </div>
                       </section>
