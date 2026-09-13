@@ -1,39 +1,13 @@
 import { env } from "cloudflare:workers";
 import { database, failure, json, owner } from "@/lib/server";
 import { discoveryConfig } from "@/lib/discovery-provider";
+import {
+  buildMonitoringServices,
+  observeClerk,
+  type MonitoringSnapshot,
+} from "@/lib/monitoring";
 
 export const dynamic = "force-dynamic";
-
-type MonitoringService = {
-  id: string;
-  name: string;
-  status: "running" | "warning" | "degraded" | "paused";
-  statusLabel: string;
-  usageCount: number;
-  successCount: number;
-  failedCount: number;
-  pendingCount: number;
-  costUsd: number;
-  budgetUsd: number | null;
-  budgetUsedPercent: number | null;
-  lastActivityAt: string | null;
-  details: string;
-};
-
-type MonitoringSnapshot = {
-  generatedAt: string;
-  summary: {
-    totalSessions: number;
-    activeInvitations: number;
-    totalDemos: number;
-    totalFeedback: number;
-    discoveryRequests: number;
-    discoveryCostUsd: number;
-    discoveryBudgetUsd: number;
-    discoveryBudgetUsedPercent: number;
-  };
-  services: MonitoringService[];
-};
 
 export async function GET() {
   let stage = "owner";
@@ -50,7 +24,7 @@ export async function GET() {
     });
 
     stage = "sessionSummary";
-    const sessionSummary = await db
+    const sessionResult = await db
       .prepare(
         `
         SELECT
@@ -81,12 +55,14 @@ export async function GET() {
       `,
       )
       .bind(now, u.userId)
-      .first<{
+      .all<{
         totalSessions: number;
         activeInvitations: number;
         totalDemos: number;
         totalFeedback: number;
       }>();
+
+    const sessionSummary = sessionResult.results[0];
 
     stage = "discoveryStats";
     const discoveryStats = await db
@@ -97,7 +73,8 @@ export async function GET() {
           COALESCE(SUM(CASE WHEN status = 'saved' THEN 1 ELSE 0 END), 0) AS successRequests,
           COALESCE(SUM(CASE WHEN status IN ('failed', 'conflict') THEN 1 ELSE 0 END), 0) AS failedRequests,
           COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) AS pendingRequests,
-          COALESCE(SUM(COALESCE(charged_microusd, reserved_microusd)), 0) AS accountedMicrousd
+          COALESCE(SUM(COALESCE(charged_microusd, reserved_microusd)), 0) AS accountedMicrousd,
+          (SELECT COALESCE(SUM(COALESCE(charged_microusd, reserved_microusd)), 0) FROM discovery_requests) AS workspaceAccountedMicrousd
         FROM discovery_requests
         INNER JOIN sessions ON sessions.id = discovery_requests.session_id
         WHERE sessions.owner_id = ?
@@ -110,6 +87,7 @@ export async function GET() {
         failedRequests: number;
         pendingRequests: number;
         accountedMicrousd: number;
+        workspaceAccountedMicrousd: number;
       }>();
 
     stage = "discoveryLatest";
@@ -125,7 +103,7 @@ export async function GET() {
       `,
       )
       .bind(u.userId)
-      .first<{ latestStatus: string; latestAt: string }>();
+      .first<{ latestStatus: string; latestAt: number }>();
 
     stage = "retiredUsage";
     const retiredUsage = await db
@@ -136,73 +114,13 @@ export async function GET() {
 
     stage = "snapshot";
     const totalDiscoveryMicrousd =
-      Number(discoveryStats?.accountedMicrousd ?? 0) +
+      Number(discoveryStats?.workspaceAccountedMicrousd ?? 0) +
       Number(retiredUsage?.accountedMicrousd ?? 0);
     const discoveryBudgetMicrousd = config.workspaceCapMicrousd ?? 0;
     const discoveryBudgetUsedPercent = discoveryBudgetMicrousd
       ? Math.min(100, Number((totalDiscoveryMicrousd / discoveryBudgetMicrousd) * 100))
       : 100;
     const discoveryCostUsd = totalDiscoveryMicrousd / 1_000_000;
-
-    const discoveryService: MonitoringService = {
-      id: "discovery-chat",
-      name: `Discovery interviewer (${config.model})`,
-      usageCount: Number(discoveryStats?.requests ?? 0),
-      successCount: Number(discoveryStats?.successRequests ?? 0),
-      failedCount: Number(discoveryStats?.failedRequests ?? 0),
-      pendingCount: Number(discoveryStats?.pendingRequests ?? 0),
-      costUsd: discoveryCostUsd,
-      budgetUsd: discoveryBudgetMicrousd ? discoveryBudgetMicrousd / 1_000_000 : null,
-      budgetUsedPercent: discoveryBudgetMicrousd ? discoveryBudgetUsedPercent : null,
-      lastActivityAt: discoveryLatest?.latestAt ?? null,
-      status: "running",
-      statusLabel: "Running",
-      details: "",
-    };
-
-    if (!config.enabled) {
-      discoveryService.status = "paused";
-      discoveryService.statusLabel = "Discovery disabled";
-      discoveryService.details = "Chat is currently disabled in environment settings.";
-    } else if (
-      discoveryService.pendingCount > 0 ||
-      discoveryLatest?.latestStatus === "pending"
-    ) {
-      discoveryService.status = "warning";
-      discoveryService.statusLabel = "Processing";
-      discoveryService.details =
-        "One or more discovery calls are waiting for provider completion.";
-    } else if (discoveryService.failedCount > 0) {
-      discoveryService.status = "degraded";
-      discoveryService.statusLabel = "Attention needed";
-      discoveryService.details =
-        "Recent discovery requests failed and may need review in logs.";
-    } else if (discoveryBudgetMicrousd && discoveryBudgetUsedPercent >= 95) {
-      discoveryService.status = "warning";
-      discoveryService.statusLabel = "Budget near limit";
-      discoveryService.details =
-        "Discovery budget is near the configured workspace cap.";
-    } else {
-      discoveryService.details =
-        "Discovery traffic and budget are within normal operating limits.";
-    }
-
-    const storageService: MonitoringService = {
-      id: "session-store",
-      name: "Session storage (Cloudflare D1)",
-      status: "running",
-      statusLabel: "Active",
-      usageCount: Number(sessionSummary?.totalSessions ?? 0),
-      successCount: Number(sessionSummary?.totalDemos ?? 0),
-      failedCount: 0,
-      pendingCount: 0,
-      costUsd: 0,
-      budgetUsd: null,
-      budgetUsedPercent: null,
-      lastActivityAt: now,
-      details:
-        "Mirai session state and discovery evidence are persisted in D1. Cost is provisioned in the Cloudflare account and not metered in this app.",
-    };
 
     const summary: MonitoringSnapshot["summary"] = {
       totalSessions: Number(sessionSummary?.totalSessions ?? 0),
@@ -216,11 +134,47 @@ export async function GET() {
       discoveryBudgetUsedPercent: Number(discoveryBudgetUsedPercent.toFixed(1)),
     };
 
-    return json({
+    stage = "optionalObservations";
+    // Metadata checks are optional: failures must not blank the spending snapshot.
+    const [clerk, files] = await Promise.all([
+      observeClerk(env.CLERK_SECRET_KEY),
+      Promise.resolve()
+        .then(() =>
+          db
+            .prepare(`
+        SELECT COUNT(*) AS count, COALESCE(SUM(project_files.size), 0) AS bytes
+        FROM project_files
+        INNER JOIN sessions ON sessions.id = project_files.project_id
+        WHERE sessions.owner_id = ?
+      `)
+            .bind(u.userId)
+            .first<{ count: number; bytes: number }>(),
+        )
+        .catch(() => null),
+    ]);
+    const size = sessionResult.meta?.size_after;
+    const snapshot: MonitoringSnapshot = {
       generatedAt: now,
       summary,
-      services: [discoveryService, storageService],
-    });
+      services: buildMonitoringServices({
+        now,
+        summary,
+        discovery: {
+          enabled: config.enabled,
+          model: config.model,
+          sessionCapUsd: config.capMicrousd / 1_000_000,
+          failed: Number(discoveryStats?.failedRequests ?? 0),
+          pending: Number(discoveryStats?.pendingRequests ?? 0),
+          lastActivityAt: discoveryLatest?.latestAt ?? null,
+        },
+        databaseBytes:
+          typeof size === "number" && Number.isFinite(size) && size >= 0 ? size : null,
+        files,
+        bucketConfigured: Boolean(env.BUCKET),
+        clerk,
+      }),
+    };
+    return json(snapshot);
   } catch (e) {
     const response = failure(e);
     if (response.status >= 500) {

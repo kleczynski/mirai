@@ -24,9 +24,7 @@ import {
   Send,
   Download,
   CircleAlert,
-  CircleDollarSign,
   Activity,
-  Database,
 } from "lucide-react";
 import {
   Dialog,
@@ -61,41 +59,8 @@ import DiscoveryObserver, { DiscoveryTab } from "./discovery-observer";
 import SourceHistory, { TelegramTranscript } from "./source-history";
 import { registerWorkspaceTools } from "@/lib/webmcp";
 import { MiraiSignOut } from "./clerk-provider";
-type MonitoringService = {
-  id: string;
-  name: string;
-  status: "running" | "warning" | "degraded" | "paused";
-  statusLabel: string;
-  usageCount: number;
-  successCount: number;
-  failedCount: number;
-  pendingCount: number;
-  costUsd: number;
-  budgetUsd: number | null;
-  budgetUsedPercent: number | null;
-  lastActivityAt: string | null;
-  details: string;
-};
-type MonitoringSnapshot = {
-  generatedAt: string;
-  summary: {
-    totalSessions: number;
-    activeInvitations: number;
-    totalDemos: number;
-    totalFeedback: number;
-    discoveryRequests: number;
-    discoveryCostUsd: number;
-    discoveryBudgetUsd: number;
-    discoveryBudgetUsedPercent: number;
-  };
-  services: MonitoringService[];
-};
-const monitorStatusClass = (
-  status: MonitoringService["status"],
-) => `status status-${status}`;
-const monitorCurrency = (value: number) => `$${value.toFixed(4)}`;
-const monitorPercent = (value: number | null) =>
-  value === null ? "n/a" : `${value.toFixed(1)}%`;
+import type { MonitoringSnapshot } from "@/lib/monitoring";
+import MonitoringPanel from "./monitoring";
 const icons = {
   custom: Sparkles,
   carpenter: Hammer,
@@ -1028,111 +993,7 @@ export default function Workspace({
                       Loading operational data…
                     </div>
                   ) : monitoring ? (
-                    <>
-                      <div className="detail-grid">
-                        <section className="panel">
-                          <h2>
-                            <CircleDollarSign size={18} />
-                            Costs
-                          </h2>
-                          <p className="meta">
-                            Discovery budget: {monitorCurrency(monitoring.summary.discoveryBudgetUsd)}
-                            {" / "}
-                            Used: {monitorCurrency(monitoring.summary.discoveryCostUsd)}
-                            {" · "}
-                            {monitorPercent(
-                              monitoring.summary.discoveryBudgetUsd > 0
-                                ? monitoring.summary.discoveryBudgetUsedPercent
-                                : null,
-                            )}
-                          </p>
-                          <ul className="constraint-list">
-                            <li>
-                              <Database size={15} />
-                              Total sessions: {monitoring.summary.totalSessions}
-                            </li>
-                            <li>
-                              <CircleAlert size={15} />
-                              Active invitations: {monitoring.summary.activeInvitations}
-                            </li>
-                            <li>
-                              <CircleCheck size={15} />
-                              Discovery requests: {monitoring.summary.discoveryRequests}
-                            </li>
-                            <li>
-                              <MessageSquare size={15} />
-                              Demos linked: {monitoring.summary.totalDemos}
-                            </li>
-                          </ul>
-                        </section>
-                        <section className="panel">
-                          <h2>
-                            <Activity size={18} />
-                            Platform signals
-                          </h2>
-                          <p className="meta">
-                            Feedback volume and request activity are surfaced for quick
-                            operator checks.
-                          </p>
-                          <ul className="constraint-list">
-                            <li>
-                              <MessageSquare size={15} />
-                              Feedback entries: {monitoring.summary.totalFeedback}
-                            </li>
-                            <li>
-                              <CircleAlert size={15} />
-                              Services in view: {monitoring.services.length}
-                            </li>
-                          </ul>
-                        </section>
-                      </div>
-                      <section className="panel">
-                        <h2>Services</h2>
-                        <div className="discovery-table">
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>Service</th>
-                                <th>Status</th>
-                                <th>Requests</th>
-                                <th>Cost</th>
-                                <th>Budget</th>
-                                <th>Budget used</th>
-                                <th>Last activity</th>
-                                <th>Details</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {monitoring.services.map((service) => (
-                                <tr key={service.id}>
-                                  <td>
-                                    <strong>{service.name}</strong>
-                                  </td>
-                                  <td>
-                                    <span className={monitorStatusClass(service.status)}>
-                                      <span />
-                                      {service.statusLabel}
-                                    </span>
-                                  </td>
-                                  <td>{service.usageCount}</td>
-                                  <td>{monitorCurrency(service.costUsd)}</td>
-                                  <td>{service.budgetUsd === null ? "n/a" : monitorCurrency(service.budgetUsd)}</td>
-                                  <td>{monitorPercent(service.budgetUsedPercent)}</td>
-                                  <td>
-                                    {service.lastActivityAt
-                                      ? new Date(service.lastActivityAt).toLocaleString()
-                                      : "No activity"}
-                                  </td>
-                                  <td className="discovery-metadata">
-                                    {service.details}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </section>
-                    </>
+                    <MonitoringPanel snapshot={monitoring} />
                   ) : (
                     <div className="quiet-empty">
                       <CircleAlert size={28} />
