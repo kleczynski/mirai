@@ -36,12 +36,20 @@ type MonitoringSnapshot = {
 };
 
 export async function GET() {
+  let stage = "owner";
   try {
     const u = await owner();
+    stage = "configuration";
     const now = new Date().toISOString();
     const db = database();
-    const config = discoveryConfig(env);
+    const config = discoveryConfig({
+      MIRAI_DISCOVERY_ENABLED: env.MIRAI_DISCOVERY_ENABLED,
+      MIRAI_DISCOVERY_MODEL: env.MIRAI_DISCOVERY_MODEL,
+      MIRAI_DISCOVERY_SESSION_CAP_USD: env.MIRAI_DISCOVERY_SESSION_CAP_USD,
+      MIRAI_DISCOVERY_WORKSPACE_CAP_USD: env.MIRAI_DISCOVERY_WORKSPACE_CAP_USD,
+    });
 
+    stage = "sessionSummary";
     const sessionSummary = await db
       .prepare(
         `
@@ -80,6 +88,7 @@ export async function GET() {
         totalFeedback: number;
       }>();
 
+    stage = "discoveryStats";
     const discoveryStats = await db
       .prepare(
         `
@@ -103,32 +112,35 @@ export async function GET() {
         accountedMicrousd: number;
       }>();
 
+    stage = "discoveryLatest";
     const discoveryLatest = await db
       .prepare(
         `
-        SELECT status AS latestStatus, created_at AS latestAt
+        SELECT discovery_requests.status AS latestStatus, discovery_requests.created_at AS latestAt
         FROM discovery_requests
         INNER JOIN sessions ON sessions.id = discovery_requests.session_id
         WHERE sessions.owner_id = ?
-        ORDER BY created_at DESC
+        ORDER BY discovery_requests.created_at DESC
         LIMIT 1
       `,
       )
       .bind(u.userId)
       .first<{ latestStatus: string; latestAt: string }>();
 
+    stage = "retiredUsage";
     const retiredUsage = await db
-      .prepare("SELECT COALESCE(SUM(accounted_microusd), 0) AS accountedMicrousd FROM discovery_retired_usage")
+      .prepare(
+        "SELECT COALESCE(SUM(accounted_microusd), 0) AS accountedMicrousd FROM discovery_retired_usage",
+      )
       .first<{ accountedMicrousd: number }>();
 
+    stage = "snapshot";
     const totalDiscoveryMicrousd =
-      Number(discoveryStats?.accountedMicrousd ?? 0) + Number(retiredUsage?.accountedMicrousd ?? 0);
+      Number(discoveryStats?.accountedMicrousd ?? 0) +
+      Number(retiredUsage?.accountedMicrousd ?? 0);
     const discoveryBudgetMicrousd = config.workspaceCapMicrousd ?? 0;
     const discoveryBudgetUsedPercent = discoveryBudgetMicrousd
-      ? Math.min(
-          100,
-          Number((totalDiscoveryMicrousd / discoveryBudgetMicrousd) * 100),
-        )
+      ? Math.min(100, Number((totalDiscoveryMicrousd / discoveryBudgetMicrousd) * 100))
       : 100;
     const discoveryCostUsd = totalDiscoveryMicrousd / 1_000_000;
 
@@ -152,20 +164,27 @@ export async function GET() {
       discoveryService.status = "paused";
       discoveryService.statusLabel = "Discovery disabled";
       discoveryService.details = "Chat is currently disabled in environment settings.";
-    } else if (discoveryService.pendingCount > 0 || discoveryLatest?.latestStatus === "pending") {
+    } else if (
+      discoveryService.pendingCount > 0 ||
+      discoveryLatest?.latestStatus === "pending"
+    ) {
       discoveryService.status = "warning";
       discoveryService.statusLabel = "Processing";
-      discoveryService.details = "One or more discovery calls are waiting for provider completion.";
+      discoveryService.details =
+        "One or more discovery calls are waiting for provider completion.";
     } else if (discoveryService.failedCount > 0) {
       discoveryService.status = "degraded";
       discoveryService.statusLabel = "Attention needed";
-      discoveryService.details = "Recent discovery requests failed and may need review in logs.";
+      discoveryService.details =
+        "Recent discovery requests failed and may need review in logs.";
     } else if (discoveryBudgetMicrousd && discoveryBudgetUsedPercent >= 95) {
       discoveryService.status = "warning";
       discoveryService.statusLabel = "Budget near limit";
-      discoveryService.details = "Discovery budget is near the configured workspace cap.";
+      discoveryService.details =
+        "Discovery budget is near the configured workspace cap.";
     } else {
-      discoveryService.details = "Discovery traffic and budget are within normal operating limits.";
+      discoveryService.details =
+        "Discovery traffic and budget are within normal operating limits.";
     }
 
     const storageService: MonitoringService = {
@@ -203,6 +222,22 @@ export async function GET() {
       services: [discoveryService, storageService],
     });
   } catch (e) {
-    return failure(e);
+    const response = failure(e);
+    if (response.status >= 500) {
+      // Static stage + stack frames only: never log identity, bindings or evidence.
+      console.error("Mirai monitoring failed", {
+        endpoint: "/api/admin/monitoring",
+        stage,
+        stack:
+          e instanceof Error
+            ? e.stack
+                ?.split("\n")
+                .filter((line) => /^\s+at /.test(line))
+                .slice(0, 8)
+                .join("\n")
+            : undefined,
+      });
+    }
+    return response;
   }
 }

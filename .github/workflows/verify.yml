@@ -51,6 +51,9 @@ jobs:
       - name: Test discovery chat (offline)
         run: node --import ./tests/typescript-loader.mjs tests/discovery-chat.mjs
 
+      - name: Test monitoring endpoint (offline)
+        run: node tests/monitoring.mjs
+
       - name: Build
         run: npm run build
 
