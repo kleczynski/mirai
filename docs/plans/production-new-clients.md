@@ -1,8 +1,68 @@
 # Mirai release and operations runbook
 
-Verified on 2026-09-12 after the project collaboration release. This is the current operations
+Updated on 2026-09-13 after the monitoring endpoint repair. This is the current operations
 reference. Earlier migration investigations describe history, not actions to replay.
 Always inspect live configuration before the next release; these observations are dated.
+
+## Monitoring endpoint repair, 2026-09-13
+
+Owner-authorized production repair deployed from `main` source `8eb05d6`
+(monitoring fix `e42afe2`). Current production Worker:
+`234c2da2-e7f4-4833-a0e1-ab573d024833`; replaced
+`96993435-0b26-4746-b9b7-84966149cd44` (source `0ad619e`).
+
+The existing signed-in owner browser reproduced `GET /api/admin/monitoring`
+with HTTP 500 and exact body:
+`{"error":"Could not save or load this session. Your input has been kept. Please try again."}`.
+Live `wrangler tail mirai-production` captured
+`D1_ERROR: ambiguous column name: created_at at offset 40: SQLITE_ERROR`.
+The old generic handler emitted only that message, not a runtime stack.
+
+All four SQL statements were extracted from the route and run read-only against
+production D1 using Wrangler. Because `d1 execute` has no binding option, the
+owner ID retrieved from D1 and current ISO time were safely SQL-quoted into the
+same placeholders; no identity, invitation or evidence was saved to source.
+The latest-discovery join alone failed: both joined tables have `created_at`.
+The session aggregate, discovery aggregate and retired-usage query passed.
+All nine session rows contained valid JSON with array demos/feedback fields.
+The fix qualifies the discovery timestamp in SELECT and ORDER BY. It also
+passes explicitly typed discovery settings and adds endpoint/stage/stack-frame
+context for server failures, excluding identity, bindings and evidence. The
+existing generic error message stays server-side; the client response is unchanged.
+
+Validation: offline endpoint regression runs real SQL against disposable SQLite
+and covers owner isolation, latest request order, charged/reserved/retired usage,
+401 before database access and contextual 500 logging. Typecheck, lint (four
+existing warnings), offline discovery regressions and production build passed.
+CI now runs the monitoring regression. A clean npm install initially exposed two
+missing optional WASM lock entries; `8eb05d6` adds only those entries without
+changing existing dependency versions. The subsequent locked install passed.
+
+Build provenance: isolated `git archive` of `8eb05d6`, Node 24.10.0, npm 11.6.1,
+locked install, production Clerk publishable key read from the prior Worker
+version into build process environment. No local environment files or secrets
+were copied. Preparation used `scripts/prepare-production-deploy.mjs` against
+that isolated directory; Wrangler 4.92.0 dry run and deployment used only
+`dist/server/wrangler.production.json --keep-vars`.
+
+Observed after deployment: the signed-in owner request returned HTTP 200 at
+2026-09-13T14:03:20Z. Tail identified the new Worker on `mirai.party`, with no
+errors or exceptions. The snapshot reported 9 sessions, 8 active invitations,
+18 successful discovery requests, no pending/failed requests and $0.151011 of
+the $1 database budget (15.1%). Anonymous and forged identity headers both
+returned 401. All four direct D1 queries passed again with unchanged totals;
+retired accounting remained zero. Version API binding metadata before/after
+matched, including D1, R2, publishable key and secret names. Runtime secrets
+were preserved with `--keep-vars`; their values were not read or replaced.
+
+No schema migration, production data writes, paid provider calls, demo changes
+or approval changes. Dashboard routing and the checked observability-disabled
+overlay remain unchanged; live tail was used for this investigation. The
+existing Terra provider and $0.25/session, $1/database caps were preserved;
+the returned workspace cap was independently observed, while the session cap
+remains a preserved secret setting. No broader client flow or microphone
+coverage is claimed. Future failures can be located by the logged query stage;
+this release did not deliberately inject an error into production.
 
 ## BDO expert demo release, 2026-09-12
 
