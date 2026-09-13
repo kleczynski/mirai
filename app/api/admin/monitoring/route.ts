@@ -48,8 +48,26 @@ export async function GET() {
         SELECT
           COUNT(*) AS totalSessions,
           SUM(CASE WHEN expires_at > ? THEN 1 ELSE 0 END) AS activeInvitations,
-          COALESCE(SUM(json_array_length(json_extract(data, '$.demos')), 0) AS totalDemos,
-          COALESCE(SUM(json_array_length(json_extract(data, '$.feedback')), 0) AS totalFeedback
+          COALESCE(
+            SUM(
+              CASE
+                WHEN json_type(json_extract(data, '$.demos')) = 'array'
+                  THEN json_array_length(json_extract(data, '$.demos'))
+                ELSE 0
+              END
+            ),
+            0
+          ) AS totalDemos,
+          COALESCE(
+            SUM(
+              CASE
+                WHEN json_type(json_extract(data, '$.feedback')) = 'array'
+                  THEN json_array_length(json_extract(data, '$.feedback'))
+                ELSE 0
+              END
+            ),
+            0
+          ) AS totalFeedback
         FROM sessions
         WHERE owner_id = ?
       `,
