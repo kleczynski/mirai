@@ -4,6 +4,57 @@ Updated on 2026-09-13 after the monitoring endpoint repair. This is the current 
 reference. Earlier migration investigations describe history, not actions to replay.
 Always inspect live configuration before the next release; these observations are dated.
 
+## Service usage and billing monitoring, 2026-09-13
+
+Owner-authorized update deployed to `mirai-production` / `mirai.party`, Worker
+`092a4cc0-34d9-4872-b656-bfd8f669b4bd`, from source `a5d3b37` on `main`.
+Previous version: `234c2da2-e7f4-4833-a0e1-ab573d024833`.
+See the [service-monitoring checkpoint](service-monitoring.md).
+
+Monitoring now displays OpenAI discovery, Clerk, Cloudflare Workers, D1 and R2,
+with labelled observations, source/check time, billing actions and internal
+budget warnings at 80%, 95% and exhaustion. Supabase remains unwired. GitHub
+Actions and domain/HTTPS are additional dashboard links, not connected metrics.
+Missing provider billing values are null/unavailable, never zero-dollar charges.
+Clerk's bounded count request reports registered users, not billable MRU.
+D1 size comes from query metadata; R2 counts/bytes come from owner-scoped file
+records, not billed bucket storage. Database-lifetime discovery spending includes
+all request accounting plus retired usage, while request counts stay owner-scoped.
+This corrects the display scope without changing admission limits or ledgers.
+
+Build: isolated archive of `a5d3b37`, Node 24.10.0/npm 11.6.1 locked install,
+matching production Clerk publishable key from prior version metadata supplied
+only through the build environment. No local environment files copied. Exact
+source typecheck, lint, offline monitoring regressions, production build and
+Wrangler 4.92.0 dry run passed. Deployment used the checked
+`dist/server/wrangler.production.json --keep-vars` overlay. Schema, D1/R2 binding
+metadata, existing runtime secret names and public key match before/after.
+Dashboard routing and observability-disabled configuration were preserved.
+
+Live verification: owner browser rendered all five cards at
+2026-09-13T16:05:41Z; tail recorded HTTP 200 from the new Worker, without
+logs/errors/exceptions. Clerk returned one registered user. D1 reported 225,280
+bytes; recorded owner files were zero. Discovery remained $0.151011 used,
+$0.848989 remaining, 15.1% of the $1 database-lifetime budget; the $0.25 session
+cap was displayed from runtime settings. All five exact route queries passed
+read-only production D1 checks with unchanged totals. Anonymous and forged
+identity requests returned 401. Emitted Clerk/workspace asset hashes matched
+the isolated build. Local desktop, 390px mobile and keyboard refresh were checked;
+local HTTP owner success/anonymous denial and optional-provider failure tests pass.
+
+No schema migration, production data write, paid AI call, invitation/approval
+change, secret replacement, cap increase or ledger reset occurred. This was a
+direct approved production release; no staging deployment was performed.
+GitHub Verify run `34767453069` passed production-config dry run but its main
+job stopped at existing formatting issues; full CI is not claimed green.
+
+Remaining integration limits: existing Cloudflare CLI access returned 403 for
+subscription billing, and billing-specific credentials are not configured in
+the Worker. Actual provider credit balances, invoices, plans, allowances/reset
+dates, monthly analytics and payment-failure alerts remain unavailable. The
+billing links are the action path; no balance or upgrade requirement is inferred.
+Rollback uses the prior Worker with unchanged D1/R2; no SQL rollback is needed.
+
 ## Monitoring endpoint repair, 2026-09-13
 
 Stages: [x] Scope → [x] Implement → [x] Verify → [x] Release (authorized)
